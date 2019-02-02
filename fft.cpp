@@ -7,7 +7,7 @@ public:
 	cn(db xx, db yy): x(xx), y(yy) {}
 	cn(db xx): x(xx), y(0) {}
 	db real() { return x; }
-    void operator /= (double f) { x /= f; y /= f; }
+	void operator /= (double f) { x /= f; y /= f; }
 };
 
 cn operator + (cn a, cn b) { return cn(a.x + b.x, a.y + b.y); }
