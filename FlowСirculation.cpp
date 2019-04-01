@@ -18,10 +18,16 @@ struct Dinic{
     }
 
     void addEdge(int a, int b, int cap){
-        g[a].pb(e.size());
-        e.pb({b, 0, cap});
+		g[a].pb(e.size());
+		e.pb({b, 0, cap});
         g[b].pb(e.size());
         e.pb({a, 0, 0});
+    }
+
+    void addCircular(int a, int b, int l, int r) {
+        addEdge(S, b, l); //S - source
+        addEdge(a, T, l); //T - sink
+        addEdge(a, b, r - l);
     }
 
     int minFlow, start, finish;
