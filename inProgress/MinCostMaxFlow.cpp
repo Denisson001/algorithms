@@ -1,4 +1,4 @@
-include <bits/stdc++.h>
+#include <bits/stdc++.h>
 			
 using namespace std;
 			
@@ -94,5 +94,26 @@ void returnPath(int v){
 			returnPath(ed.to);
 			break;
 		}
+	}
+}
+
+int main() {
+	cin >> n >> m >> k;
+	for (int i = 0; i < m; i++){
+		int v1, v2, cc;
+		cin >> v1 >> v2 >> cc;
+		v1--; v2--;
+		addEdge(v1, v2, 1, cc, i + 1);
+		addEdge(v2, v1, 1, cc, i + 1);
+	}
+	ll ans = minCostFlow(k, 0, n - 1);
+	cout.precision(10);
+	cout << fixed << (double)ans / k << "\n";
+	for (int it = 0; it < k; it++){
+		q.clear();
+		returnPath(0);
+		cout << q.size() << ' ';
+		for (int x : q) cout << x << ' ';
+		cout << "\n";
 	}
 }
