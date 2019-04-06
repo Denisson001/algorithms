@@ -114,7 +114,7 @@ public:
 
 	void fft(cn *a, int type){
 		int k = -1;
-		for (int i = 0; i < 25; i++) if ((n >> i) & 1){
+		for (int i = 0; i < 25; i++) if ((n >> i) & 1){ 
 			k = i;
 			break;
 		}
@@ -135,7 +135,7 @@ public:
 				}
 			}
 		}
-		if (type == -1) for (int i = 0; i < n; i++) a[i] /= n;
+		if (type == -1) for (int i = 0; i < n; i++) a[i] /= n; 
 	}
 
 	vector<int> mult(vector<int> &w1, vector<int> &w2){
@@ -247,7 +247,7 @@ struct Dinic{
 ```c++
 class NTT{
 public:
-	#define db long double
+	#define db long double 
 	#define ll long long
 	const static int mod = 998244353;
 	const static int root = 646; // 646^(2^20) == 1 (998244353)
@@ -294,7 +294,7 @@ public:
 
 	void ntt(int *a, int type){
 		int k = -1;
-		for (int i = 0; i < 25; i++) if ((n >> i) & 1){
+		for (int i = 0; i < 25; i++) if ((n >> i) & 1){ 
 			k = i;
 			break;
 		}
@@ -316,7 +316,7 @@ public:
 				}
 			}
 		}
-		if (type == -1){
+		if (type == -1){ 
 			int rev_n = rev(n);
 			for (int i = 0; i < n; i++) a[i] = mult(a[i], rev_n);
 		}
@@ -773,7 +773,7 @@ bool cmp(line s, line t){
 	if (val1 < 0) val1 += pi * 2;
 	if (val2 < 0) val2 += pi * 2;
 	return val1 < val2;
-}
+}	
 
 point crossLineLine(line s, line t){
 	ld x = (t.c * s.b - s.c * t.b) / (s.a * t.b - s.b * t.a);
@@ -806,7 +806,7 @@ void halfplanesIntersection(vector<line> a){
 				st.pop_back();
 			}
 			st.pub(i);
-		}
+		}	
 	}
     vector<int> was((int)a.size(), -1);
     bool ok = 0;
@@ -819,9 +819,9 @@ void halfplanesIntersection(vector<line> a){
     		ok = 1;
     		break;
     	}
-    }
+    } 
     if (!ok){
- 		cout << "Impossible", exit(0);
+ 		cout << "Impossible", exit(0); 
     }
     point ans = point(0, 0);
     for (int i = 0; i < st.size(); i++){
@@ -832,7 +832,7 @@ void halfplanesIntersection(vector<line> a){
     ans.y /= (ld)st.size();
     for (int i = 0; i < a.size(); i++){
     	line l = a[i];
-    	if ((l.t - l.s) % (ans - l.s) <= 0) cout << "Impossible", exit(0);
+    	if ((l.t - l.s) % (ans - l.s) <= 0) cout << "Impossible", exit(0); 
     }
     cout << "Possible\n";
     cout.precision(10);
@@ -925,12 +925,152 @@ int32_t main()
     return 0;
 }
 ```
+## <center>Matiroids</center>
+```c++
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+struct Heap{int index; int value;};
+const int K = 62;
+vector<vector<int> > data;
+int n, m;
+vector<Heap> solve(vector<Heap> answer, vector<Heap> other){
+    vector<pair<int, int> > hauss(K);
+    fill(hauss.begin(), hauss.end(), make_pair(0, 0));
+    for (int i=0; i < answer.size(); i++){
+        int T = answer[i].value, e = (1LL<<i);
+        for (int j=K-1; j >= 0; j--){
+            int ba = T&(1LL<<j);
+            if (ba==0) continue;
+            if (hauss[j].first == 0){
+                hauss[j] = {T, e};
+                break;
+            }
+            else{
+                T ^= hauss[j].first, e ^= hauss[j].second;
+            }
+        }
+    }
+    int N = answer.size() + other.size();
+    data.assign(N, {});
+    vector<bool> x1, x2;
+    x1.assign(N, false);
+    x2.assign(N, false);
+    vector<int> last;
+    last.assign(N, -1);
+    for (int i=0; i < other.size(); i++){
+        int T = other[i].value, e = 0;
+        for (int j=K-1; j >= 0; j--){
+            int ba = T&(1LL<<j);
+            if (ba==0) continue;
+            if (hauss[j].first == 0){
+                continue;
+            }
+            else{
+                T ^= hauss[j].first, e ^= hauss[j].second;
+            }
+        }
+        for (int j=0; j < answer.size(); j++){
+            if (T != 0){
+                data[j].push_back(answer.size() + i);
+                x1[answer.size()+i] = true;
+                last[answer.size()+i] = answer.size()+i;
+            }
+            else{
+                int ba = e & (1LL<<j);
+                if (ba != 0){
+                    data[j].push_back(answer.size() + i);
+                }
+            }
+        }
+    }
+    vector<bool> used;
+    used.resize(n+m, false);
+    for (int i=0; i < answer.size(); i++) used[answer[i].index] = true;
+    for (int i=0; i < answer.size(); i++){
+        for (int j=0; j < other.size(); j++){
+            if (answer[i].index != other[j].index){
+                if (!used[other[j].index]) data[answer.size() + j].push_back(i);
+            }
+            else data[answer.size() + j].push_back(i);
+            if (!used[other[j].index]){
+                x2[answer.size()+j] = true;
+            }
+        }
+    }
+    int shortest = -1;
+    queue<int> vrt;
+    for (int i=0; i < N; i++) if (x1[i]) vrt.push(i);
+    while (vrt.size()){
+        int V = vrt.front();
+        vrt.pop();
+        if (x2[V]){
+            shortest = V;
+            break;
+        }
+        for (int i=0; i < data[V].size();i++){
+            int to = data[V][i];
+            if (last[to] != -1) continue;
+            last[to] = V;
+            vrt.push(to);
+        }
+    }
+    if (shortest == -1) return answer;
+    vector<Heap> na, nold;
+    set<int> sused;
+    int now = 1;
+    while (true){
+        sused.insert(shortest);
+        if (now==1) na.push_back(other[shortest - answer.size()]);
+        else nold.push_back(answer[shortest]);
+        if (last[shortest] == shortest) break;
+        shortest = last[shortest];
+        now = 1-now;
+    }
+    for (int i=0; i < answer.size(); i++) if (!sused.count(i)) na.push_back(answer[i]);
+    for (int i=0; i < other.size(); i++) if (!sused.count(i+answer.size())) nold.push_back(other[i]);
+    return solve(na, nold);
+}
+main() {
+    //freopen("input.txt", "r", stdin);
+    vector<Heap> v;
+    cin >> n;
+    vector<Heap> answer = {};
+    for (int i=0; i < n; i++){
+        int t;
+        cin >> t;
+        if (i == 0) answer.push_back({i, t});
+        else v.push_back({i, t});
+    }
+    cin >> m;
+    for (int i=0; i < m; i++){
+        int k;
+        cin >> k;
+        for (int j=0; j < k; j++){
+            int t;
+            cin >> t;
+            if (answer.size() == 0) answer.push_back({i+n,t});
+            else v.push_back({i + n, t});
+        }
+    }
+    answer = solve(answer, v);
+    if (answer.size() < n+m){
+        cout << -1;
+        return 0;
+    }
+    vector<int> res(m);
+    for (int i=0; i < answer.size(); i++){
+        if (answer[i].index >= n) res[answer[i].index - n] = answer[i].value;
+    }
+    for (int i=0; i < m; i++) cout << res[i] << endl;
+}
+```
 ## <center>MinCostMaxFlow</center>
 ```c++
 #include <bits/stdc++.h>
-
+			
 using namespace std;
-
+			
 typedef long long ll;
 #define mp make_pair
 #define pub push_back
@@ -944,22 +1084,22 @@ const int INF = (int)1e9 + 7;
 struct edge{
 	int to, cap, flow, cost, num;
 };
-
+  
 int sz = 0;
 edge e[222222];
 vector<int> g[22222];
-
+ 
 void addEdge(int v, int to, int cap, int cost, int num){
 	g[v].pub(sz);
 	e[sz++] = edge{to, cap, 0, cost, num};
 	g[to].pub(sz);
 	e[sz++] = edge{v, 0, 0, -cost, num};
 }
-
-
+ 
+ 
 int fb[22222];
 pair<int, int> pred[22222];
-
+ 
 ll minCostFlow(int needFlow, int start, int finish){
 	ll ans = 0;
 
@@ -1008,11 +1148,11 @@ ll minCostFlow(int needFlow, int start, int finish){
 
 	return ans;
 }
-
+ 
 int n, m, k;
 bool wasEdge[2222222];
 vector<int> q;
-
+ 
 void returnPath(int v){
 	if (v == n - 1) return;
 	for (int to : g[v]){
@@ -1288,7 +1428,7 @@ const int MAXN = 500;
 int n, g[MAXN][MAXN];
 int best_cost = 1000000000;
 vector<int> best_cut;
-
+ 
 void mincut() {
 	vector<int> v[MAXN];
 	for (int i=0; i<n; ++i)
