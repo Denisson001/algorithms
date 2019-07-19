@@ -1,3 +1,134 @@
+## <center>3DConvexHull</center>
+```c++
+const db eps = 1e-9;
+
+template<class Type>
+struct pt{
+    Type x, y, z;
+    pt() {}
+    pt<Type> (Type x, Type y, Type z): x(x), y(y), z(z) {}
+    pt<Type> operator- (const pt<Type> &nxt) const { return pt<Type>(x - nxt.x, y - nxt.y, z - nxt.z); }
+    Type operator* (const pt<Type> &nxt) const { return x * nxt.x + y * nxt.y + z * nxt.z; }
+    pt<Type> operator% (const pt<Type> &nxt) const { return pt<Type>(y * nxt.z - z * nxt.y, z * nxt.x - x * nxt.z, x * nxt.y - y * nxt.x); }
+    operator pt<db>() const { return pt<db>(x, y, z); }
+    db len() const {
+        return sqrt(x * x + y * y + z * z);
+    }
+    pt<db> resize(db new_len){
+        if (len() < eps) return pt<db>(0, 0, 0);
+        db cur_len = len();
+        new_len /= cur_len;
+        return pt<db>(x * new_len, y * new_len, z * new_len);
+    }
+};
+
+template<class Type>
+struct plane{
+    pt<Type> a, b, c;
+    plane() {}
+    plane(pt<Type>& a, pt<Type>& b, pt<Type>& c): a(a), b(b), c(c) {}
+};
+
+template<int SZ>
+struct matrix{
+    int a[SZ][SZ];
+
+    ll det(){
+        if (SZ == 3){
+            return (ll)a[0][0] * (ll)a[1][1] * a[2][2] +
+                   (ll)a[1][0] * (ll)a[2][1] * a[0][2] +
+                   (ll)a[2][0] * (ll)a[0][1] * a[1][2] -
+                   (ll)a[2][0] * (ll)a[1][1] * a[0][2] -
+                   (ll)a[0][0] * (ll)a[2][1] * a[1][2] -
+                   (ll)a[1][0] * (ll)a[0][1] * a[2][2];
+        }
+
+        vector<int> t(SZ);
+        for (int i = 0; i < SZ; i++) t[i] = i;
+        ll ans = 0;
+        do {
+            ll now = 1;
+            for (int i = 0; i < SZ; i++) now *= a[i][t[i]];
+            for (int i = 0; i < SZ; i++) for (int j = 0; j < i; j++) if (t[i] < t[j]) now *= -1;
+            ans += now;
+        } while(next_permutation(t.begin(), t.end()));
+        return ans;
+    }
+};
+
+ll calcDirectedVolume(pt<ll>& a, pt<ll>& b, pt<ll>& c, pt<ll>& d){
+    pt<ll> w[3] = {b - a, c - a, d - a};
+    matrix<3> m;
+    for (int i = 0; i < 3; i++){
+        m.a[i][0] = w[i].x;
+        m.a[i][1] = w[i].y;
+        m.a[i][2] = w[i].z;
+    }
+    return m.det();
+}
+
+vector<plane<ll>> slowBuild3DConvexHull(vector<pt<ll>> &a){
+    vector<plane<ll>> ans;
+    for (int i = 0; i < a.size(); i++) for (int j = i + 1; j < a.size(); j++) for (int k = j + 1; k < a.size(); k++){
+        int w[3] = {0, 0, 0};
+        for (int s = 0; s < a.size(); s++){
+            ll val = calcDirectedVolume(a[i], a[j], a[k], a[s]);
+            if (val > 0) val = 2;
+            else if (val == 0) val = 1;
+            else val = 0;
+            w[val]++;
+        }
+        if ((w[0] > 0) + (int)(w[2] > 0) <= 1) ans.push_back(plane<ll>(a[i], a[j], a[k]));
+    }
+    return ans;
+}
+
+bool wasEdge[1001][1001];
+
+vector<plane<ll>> build3DConvexHull(vector<pt<ll>> &a){
+    vector<tuple<int, int, int>> pl;
+
+    for (int i = 0; i < 4; i++) for (int j = i + 1; j < 4; j++) for (int k = j + 1; k < 4; k++){
+        int last = (0 ^ 1 ^ 2 ^ 3) ^ (i ^ j ^ k);
+        if (calcDirectedVolume(a[i], a[j], a[k], a[last]) > 0){
+            pl.push_back(make_tuple(i, k, j));
+        } else {
+            pl.push_back(make_tuple(i, j, k));
+        }
+    }
+
+    for (int i = 4; i < a.size(); i++){
+        vector<int> rem;
+        for (int j = (int)pl.size() - 1; j >= 0; j--){
+            int w[3] = { get<0>(pl[j]), get<1>(pl[j]), get<2>(pl[j]) };
+            if (calcDirectedVolume(a[w[0]], a[w[1]], a[w[2]], a[i]) > 0){
+                rem.push_back(j);
+                wasEdge[w[0]][w[1]] = 1;
+                wasEdge[w[1]][w[2]] = 1;
+                wasEdge[w[2]][w[0]] = 1;
+            }
+        }
+        if (rem.size() == 0) continue;
+        for (int v : rem){
+            int w[3] = { get<0>(pl[v]), get<1>(pl[v]), get<2>(pl[v]) };
+            for (int j = 0; j < 3; j++){
+                int k = j == 2 ? 0 : (j + 1);
+                if (wasEdge[w[j]][w[k]] + (int)wasEdge[w[k]][w[j]] == 1){
+                    pl.push_back(make_tuple(i, w[j], w[k]));
+                }
+                wasEdge[w[j]][w[k]] = 0;
+                wasEdge[w[k]][w[j]] = 0;
+            }
+            swap(pl[v], pl.back());
+            pl.pop_back();
+        }
+    }
+
+    vector<plane<ll>> ans;
+    for (const auto &c : pl) ans.push_back(plane<ll>(a[get<0>(c)], a[get<1>(c)], a[get<2>(c)]));
+    return ans;
+}
+```
 ## <center>DinicWithScaling</center>
 ```c++
 #define pb push_back
@@ -347,6 +478,98 @@ public:
 		return ans;
 	}
 };
+```
+## <center>SmallestCircleProblem</center>
+```c++
+namespace SCP{ //Smallest Circle Problem
+    struct pt{
+        db x, y;
+        pt() {}
+        pt(db x, db y): x(x), y(y) {}
+        pt operator- (const pt &nxt) const { return pt(x - nxt.x, y - nxt.y); }
+        db len(){
+            return sqrt(x * x + y * y);
+        }
+    };
+
+    struct line{
+        db a, b, c;
+    };
+
+    db getSquare(db r){
+        return M_PI * r * r;
+    }
+
+    pt getMedian(pt &a, pt &b){
+        return pt((a.x + b.x) / 2, (a.y + b.y) / 2);
+    }
+
+    pair<pt, db> SCP(pt &a, pt &b){
+        return make_pair(getMedian(a, b), (a - b).len() / 2);
+    }
+
+    pt intersectLines(line &l1, line &l2){
+        if (abs(l1.a * l2.b - l2.a * l1.b) < eps) throw 42;
+        db x = (l2.c * l1.b - l1.c * l2.b) / (l1.a * l2.b - l2.a * l1.b);
+        db y = (l2.c * l1.a - l1.c * l2.a) / (l1.b * l2.a - l2.b * l1.a);
+        return pt(x, y);
+    }
+
+    pair<pt, db> SCP(pt &a, pt &b, pt &c){
+        pt o1 = getMedian(a, b);
+        pt o2 = getMedian(b, c);
+        line l1, l2;
+        l1.a = (b - a).x; l1.b = (b - a).y; l1.c = -(l1.a * o1.x + l1.b * o1.y);
+        l2.a = (b - c).x; l2.b = (b - c).y; l2.c = -(l2.a * o2.x + l2.b * o2.y);
+        try {
+            pt o = intersectLines(l1, l2);
+            return make_pair(o, (o - a).len());
+        } catch(...) {
+            throw;
+        }
+    }
+
+    bool inCircle(pt &a, pt &O, db r){
+        return (O - a).len() <= r + eps;
+    }
+
+    pair<pt, db> recSolve(vector<pt> &a, vector<pt> &b){
+        assert(b.size() <= 3);
+        if (b.size() == 3){
+            auto [O, r] = SCP(b[0], b[1], b[2]);
+            bool ok = 1;
+            for (auto p : a) if (!inCircle(p, O, r)){
+                ok = 0;
+                break;
+            }
+            if (ok) return make_pair(O, r);
+            else return make_pair(O, -2);
+        } else {
+            if (a.size() == 0){
+                if (b.size() == 0) return make_pair(pt(0, 0), 0);
+                if (b.size() == 1) return make_pair(b[0], 0);
+                if (b.size() == 2) return SCP(b[0], b[1]);
+            } else {
+                pt p = a.back(); a.pop_back();
+                auto [O, r] = recSolve(a, b);
+                a.push_back(p);
+                if (inCircle(p, O, r)) return make_pair(O, r);
+                a.pop_back(), b.push_back(p);
+                auto res = recSolve(a, b);
+                a.push_back(p), b.pop_back();
+                return res;
+            }
+        }
+    }
+
+    db solve(vector<pt> &a){
+        if (a.size() == 1) return 0;
+        random_shuffle(a.begin(), a.end());
+        vector<pt> b;
+        db ans = recSolve(a, b).second;
+        return getSquare(ans);
+    }
+}
 ```
 ## <center>DimasFlows2</center>
 ```c++
@@ -929,12 +1152,26 @@ int32_t main()
 ```c++
 #include <bits/stdc++.h>
 #define int long long
+// Матроид над множеством X - такое множество I подмножеств X, что
+// 1) пустое множество лежит в I
+// 2) Если A лежит в I и B лежит в А, то B лежит в I
+// 3) Если A, B лежат в I и |A| > |B|, найдется непустое x принадлежащее A/B, что x U B принадлежит I
+// Алгоритм пересечения имеет ответ answer на данный момент и other - все, что не входит в ответ
+// Затем он проводит ребра из y в z, где y лежит в answer, z лежит в other и (answer/y) U z лежит в I1
+// и проводит ребра из z в y, где y лежит в answer, z лежит в other и (answer/y) U z лежит в I2
+// X1 - множество z из other, таких, что answer U z лежит в I1, аналогично X2
+// запускаем dfs из x1 в x2, находим кратчайший путь. Если пути нет, ответ найден
+// иначе на этом кр.пути вершины из other переносим в answer и наоборот
 using namespace std;
 struct Heap{int index; int value;};
 const int K = 62;
 vector<vector<int> > data;
 int n, m;
 vector<Heap> solve(vector<Heap> answer, vector<Heap> other){
+//    for (int i=0; i < answer.size(); i++) cout << answer[i].index << " " << answer[i].value << " / ";
+//    cout << endl;
+//    for (int i=0; i < other.size(); i++) cout << other[i].index << " " << other[i].value << " / ";
+//    cout << endl;
     vector<pair<int, int> > hauss(K);
     fill(hauss.begin(), hauss.end(), make_pair(0, 0));
     for (int i=0; i < answer.size(); i++){
@@ -963,6 +1200,7 @@ vector<Heap> solve(vector<Heap> answer, vector<Heap> other){
         for (int j=K-1; j >= 0; j--){
             int ba = T&(1LL<<j);
             if (ba==0) continue;
+            //if (answer.size()==5) cout << T << " " << hauss[j].first << endl;
             if (hauss[j].first == 0){
                 continue;
             }
@@ -970,6 +1208,7 @@ vector<Heap> solve(vector<Heap> answer, vector<Heap> other){
                 T ^= hauss[j].first, e ^= hauss[j].second;
             }
         }
+        //if (answer.size()==5) cout << T << " " << e << endl;
         for (int j=0; j < answer.size(); j++){
             if (T != 0){
                 data[j].push_back(answer.size() + i);
@@ -978,8 +1217,10 @@ vector<Heap> solve(vector<Heap> answer, vector<Heap> other){
             }
             else{
                 int ba = e & (1LL<<j);
+                //if (answer.size()==5) cout << "!!" << e << endl;
                 if (ba != 0){
                     data[j].push_back(answer.size() + i);
+                    //if (answer.size()==5) cout << "!!" << i << endl;
                 }
             }
         }
