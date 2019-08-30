@@ -1,4 +1,3 @@
-//izban
 // sum(i=0..n-1) (a+b*i) div m
 ll solve(ll n, ll a, ll b, ll m) {
     if (b == 0) return n * (a / m);
