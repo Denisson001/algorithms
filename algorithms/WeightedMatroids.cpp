@@ -13,6 +13,7 @@
 //во взвешенном случае ставим веса -w[i] в вершины из other и w[i] из answer. Затем ищем
 //кратчайший путь по {len, size}
 using namespace std;
+//в Object любые поля
 struct Object{int index; int npc; int u; int v;};
 struct WeightedMatroids{
 	static const int INF = 1e9;
@@ -25,6 +26,11 @@ struct WeightedMatroids{
 		w = W, required_size = K, res = 0;
 		all_objects = o;
 	}
+	
+	// из answer убираем i, из other к answer добавляем j
+	// проверяем свойство матройда (например, связность)
+	// i, j могут быть -1
+	
 	bool valid2(vo &answer, vo &other, int i, int j){
 		
 	}
