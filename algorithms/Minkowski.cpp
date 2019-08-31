@@ -17,6 +17,8 @@ struct MinkowskiSum{
 		return {a.x+b.x, a.y+b.y};
 	}
 
+	// точки отдавать в порядке сортировки против часовой стрелки
+	
 	vector<Pt> minkowski_sum(vector<Pt> &a, vector<Pt> &b){ //возможно не работает для min(n, m) <= 2
 		int n = a.size(), m = b.size();
 		a.push_back(a[0]), a.push_back(a[1]);
