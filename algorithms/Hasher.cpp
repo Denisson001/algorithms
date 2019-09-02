@@ -3,7 +3,9 @@ struct Hasher{
 	
     int p, mod;
     
-    Hasher(const vector<int>& a, int p, int mod): a(a), p(p), mod(mod) {}
+    Hasher(const vector<int>& a, int p, int mod): a(a), p(p), mod(mod) {
+        build();
+    }
 
 	int bp(int a, int k){
 		if (k == 0) return 1;
