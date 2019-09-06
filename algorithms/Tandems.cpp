@@ -48,7 +48,7 @@ struct TandemRepeats{
 			current_pair[2*len].second = R+how_add;
 		}
 		else{
-			if (current_pair[2*len].second != -1) res.emplace_back({current_pair[2*len].first, current_pair[2*len].second, 2*len});
+			if (current_pair[2*len].second != -1) res.emplace_back(current_pair[2*len].first, current_pair[2*len].second, 2*len);
 			current_pair[2*len] = {L+how_add, R+how_add};
 		}
 	}
@@ -97,7 +97,7 @@ struct TandemRepeats{
 		current_pair.assign(n+1, {-1, -1});
 		MainLorenz(s, 0);
 		for (int i=0;i<=n;++i) if (current_pair[i].second!=-1){
-			res.emplace_back({current_pair[i].first, current_pair[i].second, i});
+			res.emplace_back(current_pair[i].first, current_pair[i].second, i);
 		}
 		return res;
 	}
