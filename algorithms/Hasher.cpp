@@ -1,4 +1,4 @@
-struct Hasher{
+struct Hasher{ 
 	vector<int> a, h, rev;
 	
     int p, mod;

@@ -1,4 +1,5 @@
 namespace SCP{ //Smallest Circle Problem
+    //it is supposed to work O(n) averagely
     struct pt{
         db x, y;
         pt() {}
