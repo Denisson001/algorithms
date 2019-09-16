@@ -129,6 +129,227 @@ vector<plane<ll>> build3DConvexHull(vector<pt<ll>> &a){
     return ans;
 }
 ```
+## <center>Aho</center>
+```c++
+struct Aho{
+    struct Vert{
+        int to[26], au[26];
+        int suf, p, c;
+        Vert() { for (int i = 0; i < 26; i++) to[i] = -1, au[i] = 0; suf = 0; }
+    };
+
+    Vert t[200007];
+    int sz;
+
+    Aho() { sz = 1; }
+
+    int add(string &s){
+        int v = 0;
+        for (char c : s){
+            int now = c - 'a';
+            if (t[v].to[now] == -1) t[sz].p = v, t[sz].c = now, t[v].to[now] = sz++;
+            v = t[v].to[now];
+        }
+        return v;
+    }
+
+    void buildSuf(){
+        vector<int> st;
+        int uk = 0;
+        st.push_back(0);
+        while(uk < st.size()){
+            int v = st[uk++];
+            if (v == 0 || t[v].p == 0) t[v].suf = 0;
+            else {
+                int cur = t[t[v].p].suf;
+                while(1){
+                    if (t[cur].to[t[v].c] != -1){
+                        t[v].suf = t[cur].to[t[v].c];
+                        break;
+                    }
+                    if (cur == 0) break;
+                    cur = t[cur].suf;
+                }
+            }
+            for (int i = 0; i < 26; i++) if (t[v].to[i] != -1) st.pb(t[v].to[i]);
+        }
+    }
+
+    void buildAu(){
+        vector<int> st;
+        int uk = 0;
+        st.push_back(0);
+        while(uk < st.size()){
+            int v = st[uk++];
+            for (int i = 0; i < 26; i++){
+                if (t[v].to[i] != -1) t[v].au[i] = t[v].to[i];
+                else {
+                    t[v].au[i] = t[t[v].suf].au[i];
+                }
+            }
+            for (int i = 0; i < 26; i++) if (t[v].to[i] != -1) st.pb(t[v].to[i]);
+        }
+    }
+};
+```
+## <center>AndConvolution</center>
+```c++
+const int K = 1<<17;
+
+// u can set modular arithmetic here
+void ANDConvolution(vector<int>& v){
+    for (int step=K; step > 1; step /= 2){
+        for (int start=0; start < K; start += step){
+            for (int w=0; w < step/2; w++){
+                v[start+w] += v[start + w + step / 2];
+            }
+        }
+    }
+}
+
+void inverseANDConvolution(vector<int>& v){
+    for (int step=K; step > 1; step /= 2){
+        for (int start=0; start < K; start += step){
+            for (int w=0; w < step/2; w++){
+                v[start+w] -= v[start + w + step / 2];
+            }
+        }
+    }
+}
+
+/* Usage Example
+    ANDConvolution(f);
+    ANDConvolution(g);
+    for (int i = 0; i < K; i++) f[i] *= g[i];
+    inverseANDConvolution(f);
+    f is ur answer
+*/
+```
+## <center>Cartesian</center>
+```c++
+#include <bits/stdc++.h>
+#define merge merg
+#define ll long long
+ 
+using namespace std;
+
+//a cartesian tree is represented as just an index of the root in the global array
+//0 is a fictitious vertex here, don`t forget!
+
+struct Vertex{int l; int r; int pr; int sz; int value;};
+const int INF = 1e9;
+const int N = 1e5+11; //possible number of vertex here
+Vertex decart[N];
+int ptr=0;
+
+int create_vertex(int value){ 
+	decart[ptr++] = {0, 0, rand()%1000000000, 1, value};
+	return ptr-1;
+}
+
+void update(int vertex){
+    int L = decart[vertex].l, R = decart[vertex].r;
+    decart[vertex].sz = 1+decart[L].sz+decart[R].sz;
+}
+
+pair<int, int> split(int father, int number){ //it lefts number elements within the left node and the remainings in the right one.
+    if (father <= 0) return make_pair(0, 0);
+    int L = decart[father].l, R = decart[father].r;
+    int l = 1+decart[L].sz;
+    if (l <= number){
+        pair<int, int> p = split(R, number - l);
+        decart[father].r = p.first;
+        p.first = father;
+        update(father);
+        return p;
+    }
+    else{
+	    pair<int, int> p = split(L, number);
+	    decart[father].l = p.second;
+	    p.second = father;
+	    update(father);
+	    return p;
+	}
+}
+
+int merge(int first, int second){ //merges two cartesians having roots first and second
+    if (first <= 0) return second;
+    if (second <= 0) return first;
+    if (decart[first].pr >= decart[second].pr){
+        int v = merge(decart[first].r, second);
+        decart[first].r = v;
+        update(first);
+        return first;
+    }
+    else{
+	    int v = merge(first, decart[second].l);
+	    decart[second].l = v;
+	    update(second);
+	    return second;
+	}
+}
+
+//DON`T FORGET THAT 0 is a fictitious vertex HERE.
+
+void init(){
+	decart[ptr++] = {-1, -1, rand()%1000000000, 0, -1}; //put a fictitious vertex with your parameters here
+}
+
+int main()
+{
+	init();
+}
+```
+## <center>CnkPrimeModulo</center>
+```c++
+#include <bits/stdc++.h>
+#define ll long long
+#define ull unsigned long long
+#define db long double
+
+using namespace std;
+
+struct SmallCnk{
+
+	int mod; //modulo must be prime
+	vector<int> fac, infac;
+
+	int mult(int x, int y){
+		return ((ll) x * (ll) y) % (ll) mod;
+	}
+
+	int pw(int x, int y){
+		if (y==0) return 1;
+		if (y==1) return x%mod;
+		if (y%2) return mult(x, pw(x, y-1));
+		int R = pw(x, y/2);
+		return mult(R, R);
+	}
+
+	SmallCnk(int given_modulo){
+		mod = given_modulo;
+		fac.push_back(1);
+		for (int i=1; i < mod; ++i) fac.push_back(mult(i, fac.back()));
+		for (int i=0; i < mod; ++i) infac.push_back(pw(fac[i], mod-2)); 
+	}
+
+	int smallcnk(int n, int k){
+	    if (k > n || k < 0) return 0;
+	    return mult(fac[n], mult(infac[k], infac[n-k]));
+	}
+	 
+	int cnk(ll n, ll k){
+	    int ans = 1;
+	    while(k > 0 || n > 0){
+	        ans = mult(ans, smallcnk(n%mod, k%mod));
+	        k /= mod;
+	        n /= mod;
+	    }
+	    return ans;
+	}
+
+};
+```
 ## <center>DinicWithScaling</center>
 ```c++
 #define pb push_back
@@ -209,6 +430,287 @@ struct Dinic{
     }
 } dinic;
 ```
+## <center>DominatorTree</center>
+```c++
+struct DominatorTree{
+    struct DSU{
+        struct Vert{
+            int p;
+            pair<int, int> val;
+        };
+
+        vector<Vert> t;
+        vector<int> ord;
+
+        DSU(vector<int> &ord): ord(ord) { t.resize(ord.size()); for (int i = 0; i < ord.size(); i++) t[i].p = i; }
+
+        int get(int v){
+                if (t[v].p == v) return v;
+                int new_p = get(t[v].p);
+                if (ord[t[v].val.first] > ord[t[t[v].p].val.first]) t[v].val = t[t[v].p].val;
+                t[v].p = new_p;
+                return t[v].p;
+        }
+
+        void merge(int a, int b){
+            a = get(a); b = get(b);
+            if (a != b){
+                t[b].p = a;
+            }
+        }
+
+        int setVal(int v, pair<int, int> val){
+            t[v].val = val;
+        }
+
+        pair<int, int> getVal(int v){
+            get(v);
+            return t[v].val;
+        }
+    };
+
+    vector<vector<int> > g, gr, lg;
+    vector<int> idom, sdom, was, tin;
+
+    int timer;
+    void dfs(int v){
+        tin[v] = timer++;
+        was[v] = 1;
+        for (int to : g[v]) if (!was[to]) dfs(to);
+    }
+
+    vector<vector<int> > req;
+
+    DominatorTree(int n, vector<pair<int, int> > &edges, int root){
+        g.resize(n); gr.resize(n); lg.resize(n);
+        idom.resize(n, -1); sdom.resize(n);
+        was.resize(n, 0), tin.resize(n);
+        req.resize(n);
+        for (auto &&e : edges){
+            g[e.first].push_back(e.second);
+            gr[e.second].push_back(e.first);
+        }
+        timer = 0; dfs(root);
+        vector<int> ord;
+        for (int i = 0; i < n; i++) ord.push_back(i);
+        sort(ord.begin(), ord.end(), [this](int w1, int w2){ return tin[w1] > tin[w2]; });
+        DSU dsu(tin);
+        for (int v : ord){
+            sdom[v] = v;
+            for (int to : gr[v]){
+                if (v == to) continue;
+                int val = tin[to] < tin[v] ? to : dsu.getVal(to).first;
+                if (tin[val] < tin[sdom[v]]) sdom[v] = val;
+            }
+
+            req[sdom[v]].push_back(v);
+            for (auto &&r : req[v]){
+                auto val = dsu.getVal(r);
+                if (tin[val.first] < tin[sdom[r]]){
+                    lg[val.second].push_back(r);
+                } else {
+                    idom[r] = sdom[r];
+                }
+            }
+
+            dsu.setVal(v, make_pair(sdom[v], v));
+            for (int to : g[v]){
+                if (tin[to] > tin[v] && dsu.t[to].p == to){
+                    dsu.merge(v, to);
+                }
+            }
+        }
+
+        for (int i = 0; i < n; i++) was[i] = 0;
+
+        for (int i = 0; i < n; i++) if (!was[i] && idom[i] != -1){
+            vector<int> st;
+            st.push_back(i);
+            was[i] = 1;
+            while(st.size()){
+                int v = st.back(); st.pop_back();
+                idom[v] = idom[i];
+                for (int to : lg[v]) if (!was[to]) was[to] = 1, st.push_back(to);
+            }
+        }
+    }
+};
+```
+## <center>FastLCS</center>
+```c++
+#include <bits/stdc++.h> 
+//this code calculates LCS of two integer sequences in O(n^2/64). Don`t forget about
+//some constant factor (around 8)
+
+#define pb push_back
+#define mp make_pair
+#define x first
+#define y second
+#define ll long long
+using namespace std;
+
+const int K = 3024; //K is going to be divided by 63, being length of the array.
+const int LEN = K/63;
+
+struct My_bitset{
+	ll arr[LEN];
+	My_bitset(){
+		for (int i=0; i < LEN; ++i){
+			arr[i] = 0;
+		}
+	}
+
+	void change(int x){
+		int num = x/63, bit = x%63;
+		arr[num] ^= (1LL<<bit);
+	}
+
+	void Or(My_bitset &g){
+		for (int i=0; i < LEN; ++i) arr[i] |= g.arr[i];
+	}
+
+	void shift_and_assign(){
+		bool was_old = true;
+		for (int i=0; i < LEN; ++i){
+			bool new_was_old = (((1LL<<62) & arr[i]) != 0);
+			if (new_was_old) arr[i] ^= (1LL<<62);
+			arr[i] <<= 1;
+			if (was_old) arr[i]^=1;
+			was_old = new_was_old;
+		}
+	}
+
+	void decrease(My_bitset &g){
+		bool trans = false;
+		for (int i=0; i < LEN; ++i){
+			arr[i] -= trans;
+			if (arr[i]==-1 && g.arr[i] == LLONG_MIN){
+				arr[i] = 0;
+				trans = true;
+				continue;
+			}
+			arr[i] -= g.arr[i];
+			if (arr[i] < 0){
+				arr[i] += LLONG_MAX;
+				arr[i]++;
+				trans = true;
+			}
+			else trans = false;
+			//assert(arr[i] >= 0);
+		}
+	}
+
+	bool exist(int x){
+		int num = x/63, bit = x%63;
+		return ((arr[num] & (1LL<<bit)) != 0);
+	}
+
+	int get_least(int x){
+		int cur = x/63, start = x%63;
+		for (int i=start; i >= 0; i--){
+			ll ba = (1LL<<i)&arr[cur];
+			if (ba == 0) continue;
+			return 63*cur + i;
+		}
+		for (int i=cur-1; i >= 0; i--){
+			if (arr[i] == 0) continue;
+			for (int j=62; j >= 0; j--){
+				ll ba = (1LL<<j)&arr[i];
+				if (ba==0) continue;
+				return 63*i+j;
+			}
+		}
+		return -1;
+	}
+
+	void print(){
+		for (int i=0; i < K; ++i){
+			if (exist(i)) cout << i << " ";
+		}
+		cout << endl;
+	}
+
+	void revert(My_bitset &g){
+	    for (int i=0; i < LEN; ++i){
+	        arr[i] &= (g.arr[i]^LLONG_MAX);
+	    }
+	}
+
+};
+
+My_bitset C, those_copy, Q;
+
+struct FastLongestCommonSubsequence{ //call get function to have a result
+	int n;
+	map<int, int> mm;
+	map<int, int> rev;
+	void transform(vector<int> &a, vector<int> &b){ 
+		vector<int> total;
+		for (int i=0;i<a.size(); ++i) total.push_back(a[i]);
+		for (int i=0;i<b.size(); ++i) total.push_back(b[i]);
+		sort(total.begin(), total.end());
+		total.resize(unique(total.begin(), total.end()) - total.begin());
+		for (int i=0;i<total.size(); ++i){
+			mm[total[i]] = i;
+			rev[i] = total[i];
+		}
+		for (int i=0;i<a.size();++i) a[i] = mm[a[i]];
+		for (int i=0;i<b.size();++i) b[i] = mm[b[i]];
+	}
+
+	vector<int> solve(vector<int> &a, vector<int> &b){ //both arrays are supposed to have elements from 0...2*n-1 interval, use transform function to compress
+		if (a.size() > b.size()) swap(a, b);
+		n = b.size();
+		if (mm.size() == 0) for (int i=0; i < 2*n; ++i) mm[i] = i;
+		vector<My_bitset> v(2*n);
+		vector<bool> used(2*n, false);
+		for (int i=0; i < n; ++i){
+			int element = b[i];
+			v[element].change(i);
+			used[element] = true;
+		}
+		for (int i=0;i<2*n;++i){
+			if (used[i]) continue;
+			while (a.size() < b.size()) a.push_back(i);
+		}
+		vector<My_bitset> answers(n+1);
+		for (int i=0; i < n; i++){
+			int element = a[i];
+			answers[i].change(n);
+			//g.print();
+			C=answers[i];
+			C.Or(v[element]);
+			those_copy=answers[i];
+			those_copy.shift_and_assign();
+			Q=C;
+			Q.decrease(those_copy);
+			C.revert(Q);
+			if (C.exist(n)) C.change(n);
+			answers[i+1] = C;
+			//C.print();
+		}
+		vector<int> ans;
+		int last = n+1;
+		for (int i=n; i > 0; i--){
+			int index = answers[i].get_least(last);
+			//cout << index << endl;
+			if (index==-1) break;
+			if (index != last){
+				ans.push_back(rev[b[index]]);
+				last = index;
+			}
+		}
+		reverse(ans.begin(), ans.end());
+		return ans;
+	}
+
+	vector<int> get(vector<int> &a, vector<int> &b){
+		transform(a, b);
+		return solve(a, b);
+	}
+
+};
+```
 ## <center>FFT</center>
 ```c++
 #define db long double
@@ -288,7 +790,7 @@ public:
 	}
 };
 ```
-## <center>FlowСirculation</center>
+## <center>FlowCirculation</center>
 ```c++
 #define pb push_back
 
@@ -373,6 +875,470 @@ struct Dinic{
         return flow;
     }
 } dinic;
+```
+## <center>GaussModulo</center>
+```c++
+struct GaussModulo {
+    int mult(int a, int b){
+        return a * (ll)b % mod;
+    }
+
+    int pow(int val, int deg){
+        if (deg == 0) return 1;
+        if (deg & 1) {
+            return mult(val, pow(val, deg - 1));
+        } else {
+            int cur_val = pow(val, deg >> 1);
+            return mult(cur_val, cur_val);
+        }
+    }
+
+    int get_rev(int val) {
+        return pow(val, mod - 2);
+    }
+
+    enum GaussSolution {
+        ZERO, ONE, MANY
+    };
+
+    int n;
+    GaussSolution solutions_cnt;
+    vector<int> solutions;
+
+    GaussModulo(vector< vector<int> > &eqs) {
+        n = (int)eqs.back().size() - 1;
+        solutions.resize(n);
+
+        int cur_eq = 0;
+        for (int v = 0; v < n; v++) {
+            int correct_eq_num = -1;
+            for (int eq_num = cur_eq; eq_num < eqs.size(); eq_num++) {
+                if (eqs[eq_num][v] != 0) {
+                    correct_eq_num = eq_num;
+                    break;
+                }
+            }
+
+            if (correct_eq_num == -1) continue;
+
+            swap(eqs[cur_eq], eqs[correct_eq_num]);
+
+            int rev_val = get_rev(eqs[cur_eq][v]);
+            for (int i = v; i < eqs[cur_eq].size(); i++) {
+                eqs[cur_eq][i] = mult(eqs[cur_eq][i], rev_val);
+            }
+
+            for (int eq_num = cur_eq + 1; eq_num < eqs.size(); eq_num++) {
+                int cur_val = eqs[eq_num][v];
+                for (int i = v; i < eqs[eq_num].size(); i++) {
+                    eqs[eq_num][i] -= mult(eqs[cur_eq][i], cur_val);
+                    if (eqs[eq_num][i] < 0) eqs[eq_num][i] += mod;
+                }
+            }
+
+            cur_eq++;
+        }
+
+        if (cur_eq < n) {
+            solutions_cnt = MANY;
+            return;
+        }
+
+        for (int i = cur_eq; i < eqs.size(); i++) {
+            if (eqs[i].back() != 0) {
+                solutions_cnt = ZERO;
+                return;
+            }
+        }
+
+        for (int v = n - 1; v >= 0; v--) {
+            for (int eq_num = v - 1; eq_num >= 0; eq_num--) {
+                eqs[eq_num].back() -= mult(eqs[eq_num][v], eqs[v].back());
+                if (eqs[eq_num].back() < 0) eqs[eq_num].back() += mod;
+                eqs[eq_num][v] = 0;
+            }
+        }
+
+        solutions_cnt = ONE;
+
+        for (int v = 0; v < n; v++) solutions[v] = eqs[v].back();
+    }
+};
+```
+## <center>GomoryHuTree</center>
+```c++
+struct Dinic{
+    struct edge{
+        int to, flow, cap;
+    };
+
+    static const int N = 3003;
+
+    vector<edge> e;
+    vector<int> g[N];
+    int ptr[N], dp[N];
+
+    void clear(int n){
+        e.clear();
+        for (int i = 0; i < n; i++) g[i].clear();
+    }
+
+    void addEdge(int a, int b, int cap){
+        g[a].pb(e.size());
+        e.pb({b, 0, cap});
+        g[b].pb(e.size());
+        e.pb({a, 0, 0});
+    }
+
+    int minFlow, start, finish;
+
+    bool bfs(int n){
+        for (int i = 0; i < n; i++) dp[i] = -1;
+        dp[start] = 0;
+        vector<int> st;
+        int uk = 0;
+        st.pb(start);
+        while(uk < st.size()){
+            int v = st[uk++];
+            for (int to : g[v]){
+                auto ed = e[to];
+                if (ed.cap - ed.flow >= minFlow && dp[ed.to] == -1){
+                    dp[ed.to] = dp[v] + 1;
+                    st.pb(ed.to);
+                }
+            }
+        }
+        return dp[finish] != -1;
+    }
+
+    int dfs(int v, int flow){
+        if (v == finish) return flow;
+        for (; ptr[v] < g[v].size(); ptr[v]++){
+            int to = g[v][ptr[v]];
+            edge ed = e[to];
+            if (ed.cap - ed.flow >= minFlow && dp[ed.to] == dp[v] + 1){
+                int add = dfs(ed.to, min(flow, ed.cap - ed.flow));
+                if (add){
+                    e[to].flow += add;
+                    e[to ^ 1].flow -= add;
+                    return add;
+                }
+            }
+        }
+        return 0;
+    }
+
+    int dinic(int start, int finish, int n){
+        Dinic::start = start;
+        Dinic::finish = finish;
+        int flow = 0;
+        for (minFlow = 1; minFlow; minFlow >>= 1){
+            while(bfs(n)){
+                for (int i = 0; i < n; i++) ptr[i] = 0;
+                while(int now = dfs(start, (int)2e9 + 7)) flow += now;
+            }
+        }
+        return flow;
+    }
+} dinic;
+
+// Работает за n - 1 min-cut
+// Передавать связный граф
+// Номера вершин 0..n-1
+struct GomoryHuTree{
+    // еще в Динице поставить ll, если нужно
+    using w_type = int;
+
+    static const int N = 3003;
+
+    struct Edge{
+        int a, b;
+        w_type w;
+        Edge() = default;
+        Edge(int a, int b, w_type w): a(a), b(b), w(w) {}
+    };
+
+    int color[N];
+    bool was[N];
+    vector< pair<int, w_type> > g[N];
+
+    void clear(int n){
+        for (int i = 0; i < n; i++) g[i].clear();
+    }
+
+    vector<Edge> build(int n, const vector<Edge>& edges){
+        for (auto&& edge : edges) g[edge.a].pb({edge.b, edge.w});
+
+        vector< vector<int> > nodes;
+        vector<Edge> tree_edges;
+
+        nodes.emplace_back(vector<int>(n));
+        for (int i = 0; i < n; i++) nodes.back()[i] = i;
+
+        while(1){
+            int v = -1;
+            for (int i = 0; i < nodes.size(); i++) if (nodes[i].size() > 1){
+                    v = i;
+                    break;
+                }
+            if (v == -1) break;
+
+            split(n, edges, nodes, v, tree_edges);
+
+            /*cout << nodes.size() << ' ' << tree_edges.size() << endl;
+            for (auto& c : nodes){
+                cout << "node: ";
+                for (int v : c) cout << v << ' ';
+                cout << endl;
+            }
+            for (auto&& c : tree_edges){
+                cout << "edge: " << c.a << ' ' << c.b << ' ' << c.w << endl;
+            }
+            cout << endl;*/
+        }
+
+        vector<Edge> ans(n - 1);
+
+        for (int i = 0; i < tree_edges.size(); i++){
+            ans[i] = {nodes[tree_edges[i].a][0], nodes[tree_edges[i].b][0], tree_edges[i].w};
+        }
+
+        return ans;
+    }
+
+    vector<int> g_comp[N];
+    vector<int> comps;
+
+    void dfs(int v, int p){
+        comps.pb(v);
+        for (int to : g_comp[v]) if (to != p) dfs(to, v);
+    }
+
+    void split(int n, const vector<Edge>& edges, vector< vector<int> >& nodes, int node_num, vector<Edge>& tree_edges){
+        auto& node = nodes[node_num];
+
+        memset(was, 0, sizeof(bool) * n);
+
+        int cc = 0;
+
+        for (int v : node) was[v] = 1, color[v] = cc++;
+
+        for (int i = 0; i < nodes.size(); i++) g_comp[i].clear();
+        for (auto&& edge : tree_edges) g_comp[edge.a].pb(edge.b), g_comp[edge.b].pb(edge.a);
+
+        for (int to : g_comp[node_num]){
+            comps.clear();
+            dfs(to, node_num);
+            for (int comp : comps) for (int v : nodes[comp]) color[v] = cc;
+            cc++;
+        }
+
+        dinic.clear(cc);
+
+        for (auto&& edge : edges) if (color[edge.a] != color[edge.b]){
+                // можно в одно ребро сумму засунуть
+                dinic.addEdge(color[edge.a], color[edge.b], edge.w);
+                dinic.addEdge(color[edge.b], color[edge.a], edge.w);
+            }
+
+        w_type cut_size = dinic.dinic(color[node[0]], color[node[1]], cc);
+
+        vector<int> left_node, right_node, other_left_nodes;
+
+        memset(was, 0, sizeof(bool) * n);
+
+        vector<int> st; st.pb(color[node[0]]); was[color[node[0]]] = 1, left_node.pb(node[0]);
+        while(st.size()){
+            int now = st.back(); st.pop_back();
+            for (int edge_num : dinic.g[now]) if (dinic.e[edge_num].flow != dinic.e[edge_num].cap){
+                    int to = dinic.e[edge_num].to;
+                    if (!was[to]){
+                        st.pb(to);
+                        was[to] = 1;
+                        if (to < node.size()){
+                            left_node.pb(node[to]);
+                        } else {
+                            other_left_nodes.pb(to);
+                        }
+                    }
+                }
+        }
+
+        memset(was, 0, sizeof(bool) * n);
+        for (int v : left_node) was[v] = 1;
+        for (int v : node) if (!was[v]) right_node.pb(v);
+
+        nodes[node_num] = std::move(left_node);
+        nodes.emplace_back(std::move(right_node));
+
+        memset(was, 0, sizeof(bool) * n);
+        for (int v : other_left_nodes) was[v] = 1;
+
+        for (auto& edge : tree_edges) if (edge.a == node_num || edge.b == node_num){
+                if (edge.a != node_num) swap(edge.a, edge.b);
+
+                if (!was[color[nodes[edge.b][0]]]){
+                    edge = {(int)nodes.size() - 1, edge.b, edge.w};
+                }
+            }
+
+        tree_edges.emplace_back(node_num, (int)nodes.size() - 1, cut_size);
+    }
+};
+```
+## <center>Hasher</center>
+```c++
+struct Hasher{ 
+	vector<int> a, h, rev;
+	
+    int p, mod;
+    
+    Hasher(const vector<int>& a, int p, int mod): a(a), p(p), mod(mod) {
+        build();
+    }
+
+	int bp(int a, int k){
+		if (k == 0) return 1;
+		if (k % 2 == 1){
+			return a * (ll)bp(a, k - 1) % mod;
+		} else {
+			int q = bp(a, k >> 1);
+			return q * (ll)q % mod;
+		}
+	}
+
+	void build(){
+		rev.resize(a.size() + 1); h.resize(a.size() + 1);
+		rev[0] = 1;
+		h[0] = 0;
+		int deg = 1;
+		for (int i = 1; i <= a.size(); i++){
+			h[i] = (h[i - 1] + a[i - 1] * (ll)deg) % mod;
+			deg = deg * (ll)p % mod;
+			rev[i] = bp(deg, mod - 2);
+		}
+	}
+
+	int get(int l, int r){
+		int ans = h[r + 1] - h[l];
+		if (ans < 0) ans += mod;
+		ans = ans * (ll)rev[l] % mod;
+		return ans;
+	}
+};	
+```
+## <center>HashTable</center>
+```c++
+const int SZ = 22;
+struct HashTable{
+    ll was[(1 << SZ) + 7];
+    int val[(1 << SZ) + 7];
+
+    HashTable() { for (int i = 0; i < (1 << SZ) + 7; i++) was[i] = -1; }
+
+    void clear(){
+        for (int i = 0; i < (1 << SZ) + 7; i++) was[i] = -1;
+    }
+
+    void set(ll pos, int new_val){
+        int gg = ((1 << SZ) - 1) & pos;
+        int p = (gg * (ll)gg * 3 + gg * 7 + 11) & ((1 << SZ) - 1);
+        while(1){
+            if (was[p] == -1){
+                was[p] = pos;
+                val[p] = new_val;
+                return;
+            } else if (was[p] == pos) {
+                val[p] = new_val;
+                return;
+            }
+            p++;
+            if (p == (1 << SZ)) p = 0;
+        }
+    }
+
+    int get(ll pos){
+        int gg = ((1 << SZ) - 1) & pos;
+        int p = (gg * (ll)gg * 3 + gg * 7 + 11) & ((1 << SZ) - 1);
+        while(1){
+            if (was[p] == -1){
+                return 0;
+            } else if (was[p] == pos) {
+                return val[p];
+            }
+            p++;
+            if (p == (1 << SZ)) p = 0;
+        }
+    }
+};
+```
+## <center>Interpolation</center>
+```c++
+double lagrange(double* x, double* y, short n, double _x) {
+	double result = 0.0;
+
+	for (short i = 0; i < n; i++)
+	{
+		double P = 1.0;
+
+		for (short j = 0; j < n; j++)
+			if (j != i)
+				P *= (_x - x[j])/ (x[i] - x[j]);
+
+		result += P * y[i];
+	}	
+
+	return result;
+}
+```
+## <center>Minkowski</center>
+```c++
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+struct MinkowskiSum{
+
+	struct Pt
+	{
+		ll x, y;
+	};
+
+	ll vector_multiple(Pt &a, Pt &b){
+		return a.x * b.y - a.y * b.x; 
+	}
+
+	Pt sum(Pt &a, Pt &b){
+		return {a.x+b.x, a.y+b.y};
+	}
+
+	// точки отдавать в порядке сортировки против часовой стрелки
+	
+	vector<Pt> minkowski_sum(vector<Pt> &a, vector<Pt> &b){ //возможно не работает для min(n, m) <= 2
+		int n = a.size(), m = b.size();
+		a.push_back(a[0]), a.push_back(a[1]);
+		b.push_back(b[0]), b.push_back(b[1]);
+		int i = 0, j = 0;
+		vector<Pt> res;
+		while (i < n || j < m){
+			res.push_back(sum(a[i], b[j]));
+			Pt first_vector = {a[i+1].x-a[i].x, a[i+1].y - a[i].y};
+			Pt second_vector = {b[j+1].x-b[j].x, b[j+1].y - b[j].y};
+			ll vp = vector_multiple(first_vector, second_vector);
+			if (vp > 0 || j==m){
+				++i;
+			}
+			else if (vp < 0 || i==n){
+				++j;
+			}
+			else{
+				++i, ++j;
+			}
+		}
+		return res;
+	}
+
+};
 ```
 ## <center>NTT</center>
 ```c++
@@ -479,9 +1445,106 @@ public:
 	}
 };
 ```
+## <center>OrConvolution</center>
+```c++
+const int K = 1<<17;
+
+// u can set modular arithmetic here
+void ORConvolution(vector<int>& v){
+    for (int step=K; step > 1; step /= 2){
+        for (int start=0; start < K; start += step){
+            for (int w=0; w < step/2; w++){
+                v[start+step/2+w] += v[start + w];
+            }
+        }
+    }
+}
+
+void inverseORConvolution(vector<int>& v){
+    for (int step=K; step > 1; step /= 2){
+        for (int start=0; start < K; start += step){
+            for (int w=0; w < step/2; w++){
+                v[start+step/2+w] -= v[start + w];
+            }
+        }
+    }
+}
+
+/* Usage Example
+    ORConvolution(f);
+    ORConvolution(g);
+    for (int i = 0; i < K; i++) f[i] *= g[i];
+    inverseORConvolution(f);
+    f is ur answer
+*/
+```
+## <center>PrimitiveRoot</center>
+```c++
+#include <bits/stdc++.h>
+#define ll long long
+#define ull unsigned long long
+#define db long double
+
+using namespace std;
+
+struct PrimitiveRoot{
+
+	int mod, root; //modulo must be prime
+	//call initialization and answer will be in 'root'
+
+	int mult(int x, int y){
+		return ((ll) x * (ll) y) % (ll) mod;
+	}
+
+	int pw(int x, int y){
+		if (y==0) return 1;
+		if (y==1) return x%mod;
+		if (y%2) return mult(x, pw(x, y-1));
+		int R = pw(x, y/2);
+		return mult(R, R);
+	}
+
+	vector<int> get_primes(int v){
+	    vector<int> ans;
+	    int uk = 2;
+	    while(uk * uk <= v){
+	        int was = 0;
+	        while(v % uk == 0){
+	            v /= uk;
+	            was = 1;
+	        }
+	        if (was) ans.push_back(uk);
+	        uk++;
+	    }
+	    if (v > 1) ans.push_back(v);
+	    return ans;
+	}
+
+	PrimitiveRoot(int given_mod){
+		mod = given_mod;
+	    int phi = mod - 1;
+	    auto now = get_primes(phi);
+
+	    for (int v = 1; ; v++){
+	        bool ok = 1;
+
+	        for (int p : now) if (pw(v, phi / p) == 1){
+	            ok = 0;
+	            break;
+	        }
+
+	        if (ok){
+	        	root = v;
+	        	return;
+	        }
+	    }
+	}
+};
+```
 ## <center>SmallestCircleProblem</center>
 ```c++
 namespace SCP{ //Smallest Circle Problem
+    //it is supposed to work O(n) averagely
     struct pt{
         db x, y;
         pt() {}
@@ -570,6 +1633,320 @@ namespace SCP{ //Smallest Circle Problem
         return getSquare(ans);
     }
 }
+```
+## <center>SuffixAutomata</center>
+```c++
+struct Automata{
+    static const int K = 1000000; //choose K as twice string length + const
+    int counter;
+    int go[K][26];
+    int last;
+    int suf[K], len[K];
+    Automata(){
+        for (int i=0; i < K; i++){
+            suf[i] = -1;
+            len[i] = -1;
+            for (int j=0; j < 26; j++){
+                go[i][j] = -1;
+            }
+        }
+        len[0] = -1;
+        last = 0;
+        counter = 1;
+    }
+    void add(int number){
+        int newlast = counter; len[newlast] = len[last] + 1; int p = last; counter++;
+        while (p!=-1 && go[p][number] == -1){
+            go[p][number] = newlast;
+            p = suf[p];
+        }
+        if (p == -1){
+            suf[newlast] = 0;
+        }
+        else{
+            int q = go[p][number];
+            if (len[q] == len[p] + 1){
+                suf[newlast] = q;
+            }
+            else{
+                int r = counter; counter ++;
+                for (int i=0;i<26;i++){
+                    go[r][i] = go[q][i];
+                }
+                suf[r] = suf[q];
+                suf[q] = r;
+                suf[newlast] = r;
+                len[r] = len[p] + 1;
+                while (p!=-1 && go[p][number] == q){
+                    go[p][number] = r;
+                    p = suf[p];
+                }
+            }
+        }
+        last = newlast;
+    }
+    void add_total(string &s){
+        for (int i=0; i < s.size(); i++){
+            add(s[i] - 'a');
+        }
+    }
+};
+```
+## <center>SumLine</center>
+```c++
+// sum(i=0..n-1) (a+b*i) div m
+ll solve(ll n, ll a, ll b, ll m) {
+    if (b == 0) return n * (a / m);
+    if (a >= m) return n * (a / m) + solve(n, a % m, b, m);
+    if (b >= m) return n * (n - 1) / 2 * (b / m) + solve(n, a, b % m, m);
+    return solve((a + b * n) / m, (a + b * n) % m, m, b);
+}
+```
+## <center>Tandems</center>
+```c++
+#include <bits/stdc++.h>
+#define ctr CompressedTandemRepeats
+#define ll long long
+#define ull unsigned long long
+#define db long double
+
+using namespace std;
+
+struct CompressedTandemRepeats{int l; int r; int x;}; 
+//we represent all tandem repeats as triples (l, r, x)
+//what means that all substrings beginning in [l, ..., r] and having size x are tandem repeats
+//it can be proved that triples number is O(n)
+//the algorithm works in O(n) space and O(n*logn) time
+
+//just call get function to get all triples
+
+struct TandemRepeats{
+	int n;
+	int how_reverse, how_add;
+	vector<ctr> res; //answer will be here
+	vector<pair<int, int> > current_pair;
+
+	vector<int> z_function(string &s){
+		int n = s.size();
+		vector<int> z (n);
+		for (int i=1, l=0, r=0; i<n; ++i) {
+			if (i <= r)
+				z[i] = min (r-i+1, z[i-l]);
+			while (i+z[i] < n && s[z[i]] == s[i+z[i]])
+				++z[i];
+			if (i+z[i]-1 > r)
+				l = i,  r = i+z[i]-1;
+		}
+		return z;
+	}
+
+	void add_to_list(int index, int len, int k1, int k2){
+		int L = len-k2, R = k1;
+		if (L>R) return;
+		swap(L, R);
+		L = index-L, R = index-R;
+		if (how_reverse > 0){
+			L += 2*len-1, R += 2*len-1;
+			L = (how_reverse-1-L), R = (how_reverse-1-R);
+			swap(L, R);
+		}
+		if (current_pair[2*len].second != -1 && current_pair[2*len].second+1 == L+how_add){
+			current_pair[2*len].second = R+how_add;
+		}
+		else{
+			if (current_pair[2*len].second != -1) res.emplace_back(current_pair[2*len].first, current_pair[2*len].second, 2*len);
+			current_pair[2*len] = {L+how_add, R+how_add};
+		}
+	}
+
+	void main_part(string &u, string &v, bool if_forget){
+		string u_rev = u;
+		reverse(u_rev.begin(), u_rev.end());
+		vector<int> ZU = z_function(u_rev);
+		string spec = v+'#'+u;
+		vector<int> ZUV = z_function(spec);
+		for (int i=0; i < u.size(); ++i){
+			int len = (u.size()-i);
+			if (len > v.size()) continue;
+			int k1 = 0;
+			if (i > 0) k1 = ZU[u.size()-i];
+			k1 = min(k1, len-1);
+			int k2 = ZUV[v.size()+1+u.size()-len];
+			if (if_forget) k2 = min(k2, len-1);
+			add_to_list(i, len, k1, k2);
+		}
+	}
+
+	void MainLorenz(string &s, int add){
+		if (s.size() == 1) return;
+		string u, v;
+		for (int i=0; i < s.size(); ++i){
+			if (2*i < s.size()) u += s[i];
+			else v += s[i];
+		}
+
+		string Q = v;
+		int R = u.size();
+		MainLorenz(u, add);
+
+		how_reverse = -1, how_add=add;
+		main_part(u, v, false);
+		reverse(u.begin(), u.end()), reverse(v.begin(), v.end());
+		how_reverse = s.size();
+		main_part(v, u, true);
+
+		MainLorenz(Q, add+R);
+	}
+
+	vector<ctr> get(string &s){
+		n = s.size();
+		current_pair.assign(n+1, {-1, -1});
+		MainLorenz(s, 0);
+		for (int i=0;i<=n;++i) if (current_pair[i].second!=-1){
+			res.emplace_back(current_pair[i].first, current_pair[i].second, i);
+		}
+		return res;
+	}
+};
+```
+## <center>WeightedMatroids</center>
+```c++
+#include <bits/stdc++.h>
+#define vo vector<Object>
+// Матроид над множеством X - такое множество I подмножеств X, что
+// 1) пустое множество лежит в I
+// 2) Если A лежит в I и B лежит в А, то B лежит в I
+// 3) Если A, B лежат в I и |A| > |B|, найдется непустое x принадлежащее A/B, что x U B принадлежит I
+// Алгоритм пересечения имеет ответ answer на данный момент и other - все, что не входит в ответ
+// Затем он проводит ребра из y в z, где y лежит в answer, z лежит в other и (answer/y) U z лежит в I1
+// и проводит ребра из z в y, где y лежит в answer, z лежит в other и (answer/y) U z лежит в I2
+// X1 - множество z из other, таких, что answer U z лежит в I1, аналогично X2
+// запускаем dfs из x1 в x2, находим кратчайший путь. Если пути нет, ответ найден
+// иначе на этом кр.пути вершины из other переносим в answer и наоборот
+//во взвешенном случае ставим веса -w[i] в вершины из other и w[i] из answer. Затем ищем
+//кратчайший путь по {len, size}
+using namespace std;
+//в Object любые поля
+struct Object{int index; int npc; int u; int v;};
+struct WeightedMatroids{
+	static const int INF = 1e9;
+	vo all_objects;
+	vector<vector<int> > data;
+	int required_size;
+	int res;
+	vector<int> w;
+	WeightedMatroids(vo o, vector<int> W, int K){
+		w = W, required_size = K, res = 0;
+		all_objects = o;
+	}
+	
+	// из answer убираем i, из other к answer добавляем j
+	// проверяем свойство матройда (например, связность)
+	// i, j могут быть -1
+	
+	bool valid2(vo &answer, vo &other, int i, int j){
+		
+	}
+	bool valid1(vo &answer, vo &other, int i, int j){
+		
+	}
+	pair<vo, vo> solve(vo answer, vo other){
+	    int N = answer.size() + other.size();
+	    data.assign(N, {});
+	    vector<bool> x1, x2;
+	    x1.assign(N, false);
+	    x2.assign(N, false);
+	    int S = answer.size();
+	    for (int i=0; i < answer.size(); i++){
+	    	for (int j=0; j < other.size(); j++){
+	    		if (valid1(answer, other, i, j)) data[i].push_back(S+j);
+	    		if (valid2(answer, other, i, j)) data[S+j].push_back(i);
+	    	}
+	    }
+	    for (int i=0; i < other.size(); i++){
+	    	if (valid1(answer, other, -1, i)) x1[S+i] = true;
+	    	if (valid2(answer, other, -1, i)) x2[S+i] = true;
+	    }
+	    //for (int i=0; i < other.size(); i++) cout << x1[i] << " " << x2[i] << endl;
+	    vector<pair<int, int> > path;
+	    vector<int> last;
+	    path.assign(N, {INF, -1}), last.assign(N, -1);
+	    for (int i=0; i < N; i++) if (x1[i]) path[i] = {-w[other[i-S].index], 1};
+	    for (int i=0; i < N; i++){
+	    	for (int j=0; j < N; j++){
+	    		for (int k=0; k < data[j].size(); k++){
+	    			int to = data[j][k];
+	    			pair<int, int> R = {path[j].first, path[j].second+1};
+	    			if (to < S) R.first += w[answer[to].index];
+	    			else R.first -= w[other[to-S].index];
+	    			if (R < path[to]){
+	    				path[to] = R, last[to] = j;
+	    			}
+	    		}
+	    	}
+	    }
+	    pair<int, int> best = {INF, -1};
+	    int where = -1;
+	    for (int i=0; i < N; i++) if (x2[i]) if (path[i] < best){
+	    	best = path[i];
+	    	where = i;
+	    }
+	    if (where == -1) return {answer, other};
+	    res -= best.first;
+	    vo na, nold;
+	    set<int> sused;
+	    int now = 1;
+	    while (true){
+	        sused.insert(where);
+	        if (now==1) na.push_back(other[where - answer.size()]);
+	        else nold.push_back(answer[where]);
+	        if (last[where] == -1) break;
+	        where = last[where];
+	        now = 1-now;
+	    }
+	    for (int i=0; i < answer.size(); i++) if (!sused.count(i)) na.push_back(answer[i]);
+	    for (int i=0; i < other.size(); i++) if (!sused.count(i+answer.size())) nold.push_back(other[i]);
+	    return {na, nold};
+	}
+
+	int get_w(){
+		vo ans = {}, other = all_objects;
+		for (int i=0; i < required_size; i++){
+			pair<vo, vo> res = solve(ans, other);
+			if (res.first.size() == ans.size()) return -INF;
+			ans = res.first, other = res.second;
+		}
+		return res;
+	}
+};
+```
+## <center>XorConvolution</center>
+```c++
+const int K = 1<<17;
+
+// u can set modular arithmetic here
+void hadamard(vector<int>& v){
+    for (int step=K; step > 1; step /= 2){
+        for (int start=0; start < K; start += step){
+            for (int w=0; w < step/2; w++){
+                int F = v[start+w] + v[start+step/2+w];
+                int S = v[start+w] - v[start+step/2+w];
+                v[start + w] = F;
+                v[start+step/2+w] = S;
+            }
+        }
+    }
+}
+
+/* Usage Example
+    vector<int> f((1<<K)), g((1<<K));
+    hadamard(f);
+    hadamard(g);
+    for (int i=0; i < K; i++) f[i] *= g[i];
+    hadamard(f);
+    for (int i=0; i < K; i++) f[i] /= K;
+    // f is ur answer
+*/
 ```
 ## <center>DimasFlows2</center>
 ```c++
@@ -1621,37 +2998,6 @@ vector <ll> build_lcp(string s, vector <ll> suff) {
     return lcp;
 }
 ```
-## <center>XorConvolution</center>
-```c++
-#include <bits/stdc++.h>
-#define int long long
-using namespace std;
-const int K = 1<<17;
-vector<int> hadamard(vector<int> v){
-    for (int step=K; step > 1; step /= 2){
-        for (int start=0; start < K; start += step){
-            for (int w=0; w < step/2; w++){
-                int F = v[start+w] + v[start+step/2+w];
-                int S = v[start+w] - v[start+step/2+w];
-                v[start + w] = F;
-                v[start+step/2+w] = S;
-            }
-        }
-    }
-    return v;
-}
-signed main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    vector<int> f((1<<K)), g((1<<K));
-    f = hadamard(f);
-    g = hadamard(g);
-    for (int i=0; i < K; i++) f[i] *= g[i];
-    f = hadamard(f);
-    for (int i=0; i < K; i++) f[i] /= K;
-    return 0;
-}
-```
 ## <center>Mincut</center>
 ```c++
 /*
@@ -1701,16 +3047,5 @@ void mincut() {
 			}
 		}
 	}
-}
-```
-## <center>SumLine</center>
-```c++
-//izban
-// sum(i=0..n-1) (a+b*i) div m
-ll solve(ll n, ll a, ll b, ll m) {
-    if (b == 0) return n * (a / m);
-    if (a >= m) return n * (a / m) + solve(n, a % m, b, m);
-    if (b >= m) return n * (n - 1) / 2 * (b / m) + solve(n, a, b % m, m);
-    return solve((a + b * n) / m, (a + b * n) % m, m, b);
 }
 ```
