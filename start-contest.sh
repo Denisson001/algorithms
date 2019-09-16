@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH="$(pwd):$PATH"
+
 touch make
 chmod +x make
 
@@ -80,10 +82,40 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++11 -g -Wall -DLOCAL -o \${name} && ./\${name}
+g++ \${name}.cpp -std=c++11 -Wall -DLOCAL -o \${name} && time ./\${name}
 " >> run
 
 echo "Run script created"
+
+touch fast_run
+chmod +x fast_run
+
+echo "
+#!/bin/bash
+
+name=\$1
+
+cd \$name
+
+g++ \${name}.cpp -std=c++11 -Wall -O2 -DLOCAL -o \${name} && time ./\${name}
+" >> fast_run
+
+echo "Fast_run script created"
+
+touch sanitize_run
+chmod +x sanitize_run
+
+echo "
+#!/bin/bash
+
+name=\$1
+
+cd \$name
+
+g++ \${name}.cpp -std=c++11 -Wall -DLOCAL -fsanitize=address -fsanitize=undefined -o \${name} && time ./\${name}
+" >> sanitize_run
+
+echo "Sanitize_run script created"
 
 touch stress
 chmod +x stress
@@ -95,9 +127,9 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++11 -g -Wall -o \${name}
-g++ \${name}_stupid.cpp -std=c++11 -g -Wall -o \${name}_stupid
-g++ \${name}_gen.cpp -std=c++11 -g -Wall -o \${name}_gen
+g++ \${name}.cpp -std=c++11 -Wall -o \${name}
+g++ \${name}_stupid.cpp -std=c++11 -Wall -O2 -o \${name}_stupid
+g++ \${name}_gen.cpp -std=c++11 -Wall -O2 -o \${name}_gen
 
 for ((i = 1; i < 1000000; i++)); do
     ./\${name}_gen \$i > \${name}_input.txt
@@ -109,6 +141,22 @@ done
 " >> stress
 
 echo "Stress script created"
+
+touch open
+chmod +x open
+
+echo "
+#!/bin/bash
+
+name=\$1
+
+cd \$name
+
+subl \${name}_input.txt
+subl \${name}.cpp
+" >> open
+
+echo "Open script created"
 
 rm make
 
