@@ -13,7 +13,6 @@ name=\$1
 mkdir \$name
 cd \$name
 touch \${name}.cpp
-touch \${name}_stupid.cpp
 touch \${name}_gen.cpp
 touch \${name}_input.txt
 touch \${name}_output.txt
@@ -62,6 +61,7 @@ echo \"	srand(atoi(argv[1]));\" >> \${name}_gen.cpp
 echo \"\" >> \${name}_gen.cpp
 echo \"}\" >> \${name}_gen.cpp
 
+cp \${name}.cpp \${name}_stupid.cpp
 
 echo "Problem \${name} folder created"
 " >> make
@@ -101,6 +101,36 @@ g++ \${name}.cpp -std=c++11 -Wall -O2 -DLOCAL -o \${name} && time ./\${name}
 " >> fast_run
 
 echo "Fast_run script created"
+
+touch run_stupid
+chmod +x run_stupid
+
+echo "
+#!/bin/bash
+
+name=\$1
+
+cd \$name
+
+g++ \${name}_stupid.cpp -std=c++11 -Wall -DLOCAL -o \${name}_stupid && time ./\${name}_stupid
+" >> run_stupid
+
+echo "Run_stupid script created"
+
+touch run_gen
+chmod +x run_gen
+
+echo "
+#!/bin/bash
+
+name=\$1
+
+cd \$name
+
+g++ \${name}_gen.cpp -std=c++11 -Wall -DLOCAL -o \${name}_gen && time ./\${name}_gen 13
+" >> run_gen
+
+echo "Run_gen script created"
 
 touch sanitize_run
 chmod +x sanitize_run

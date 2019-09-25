@@ -350,6 +350,36 @@ struct SmallCnk{
 
 };
 ```
+## <center>ConvexHull2D</center>
+```c++
+vector<pt> convex_hull(vector<pt> a){
+    if (a.size() <= 1) return a;
+    sort(a.begin(), a.end(), [](const pt& a, const pt& b){
+        return a.x < b.x || a.x == b.x && a.y < b.y;
+    });
+
+    pt p1 = a[0], p2 = a.back();
+    vector<pt> up, down;
+    up.emplace_back(p1);
+    down.emplace_back(p1);
+    for (int i = 1; i < a.size(); i++){
+        if (i == (int)a.size() - 1 || ((p2 - p1) % (a[i] - p1) > 0)){
+            int sz = up.size();
+            while(sz >= 2 && ((up[sz - 1] - up[sz - 2]) % (a[i] - up[sz - 2]) >= 0)) up.pop_back(), sz--;
+            up.pb(a[i]);
+        }
+        if (i == (int)a.size() - 1 || ((p2 - p1) % (a[i] - p1) < 0)){
+            int sz = down.size();
+            while(sz >= 2 && ((down[sz - 1] - down[sz - 2]) % (a[i] - down[sz - 2]) <= 0)) down.pop_back(), sz--;
+            down.pb(a[i]);
+        }
+    }
+    vector<pt> ans((int)up.size() + (int)down.size() - 2); int dd = 0;
+    for (int i = 0; i < up.size(); i++) ans[dd++] = up[i];
+    for (int i = (int)down.size() - 2; i > 0; i--) ans[dd++] = down[i];
+    return ans;
+}
+```
 ## <center>DinicWithScaling</center>
 ```c++
 #define pb push_back
@@ -875,6 +905,585 @@ struct Dinic{
         return flow;
     }
 } dinic;
+```
+## <center>FlowNetwork_Malhotra_Goldberg</center>
+```c++
+#include <iostream>
+#include <stdexcept>
+#include <cassert>
+#include <limits.h>
+#include <optional>
+#include <type_traits>
+#include <vector>
+#include <queue>
+
+
+//Flow Network - addEdge(from, to, cap)
+//Malhotra/Goldberg(network), getNetwork()
+
+namespace NFlow{
+
+template<typename TFlow>
+class TNetwork {
+private:
+    struct TEdge_;
+
+public:
+    typedef unsigned int TVertex;
+    typedef unsigned int TVertexNumber;
+    typedef unsigned int TEdgeNum;
+
+    class TEdgeIterator {
+    friend class TNetwork;
+
+    public:
+        TFlow getFlow() const {
+            return getEdge_().flow;
+        }
+
+        TFlow getCapacity() const {
+            return getEdge_().capacity;
+        }
+
+        TFlow getResudialCapacity() const {
+            return getCapacity() - getFlow();
+        }
+
+        TVertex getFinish() const {
+            return getEdge_().finish;
+        }
+
+        void pushFlow(TFlow flow_value) {
+            const auto edge_num = network_->graph_[vertex_][edge_num_];
+            auto& edges_ = network_->edges_;
+            if (edges_[edge_num].flow + flow_value > edges_[edge_num].capacity) {
+                throw std::logic_error("Edge's flow is bigger than capacity");
+            }
+            edges_[edge_num].flow     += flow_value;
+            edges_[edge_num ^ 1].flow -= flow_value;
+        }
+
+        TEdgeIterator& operator++() {
+            if (edge_num_ < network_->graph_[vertex_].size()) {
+                ++edge_num_;
+            }
+            return *this;
+        }
+
+        bool isEnd() const {
+            return edge_num_ == network_->graph_[vertex_].size();
+        }
+
+    private:
+        typedef unsigned int TEdgeNum_;
+
+        TNetwork* network_;
+        TVertex   vertex_;
+        TEdgeNum_ edge_num_;
+
+        TEdgeIterator(TNetwork* network, TVertex vertex) :
+            network_(network),
+            vertex_(vertex),
+            edge_num_(0)
+        {}
+
+        const TEdge_& getEdge_() const {
+            if (isEnd()) {
+                throw std::out_of_range("Iterator out of range");
+            }
+            const auto edge_num = network_->graph_[vertex_][edge_num_];
+            return network_->edges_[edge_num];
+        }
+    };
+
+    TNetwork(TVertexNumber vertex_number, TVertex source, TVertex sink) :
+        vertex_number_(vertex_number),
+        source_(source),
+        sink_(sink)
+    {
+        if (source >= vertex_number || sink   >= vertex_number) {
+            throw std::out_of_range("Source or sink index is too large");
+        }
+        if (source == sink) {
+            throw std::logic_error("Source and sink are the same");
+        }
+        graph_.resize(vertex_number_);
+    }
+
+    void addEdge(TVertex start, TVertex finish, TFlow capacity) {
+        // add forward edge
+        graph_[start].push_back(edges_.size());
+        edges_.emplace_back(finish, /* flow = */ 0, capacity);
+        // add backward edge
+        graph_[finish].push_back(edges_.size());
+        edges_.emplace_back(start,  /* flow = */ 0, /* capacity = */ 0);
+    }
+
+    TEdgeIterator getEdgeIterator(TVertex vertex) {
+        return TEdgeIterator(this, vertex);
+    }
+
+    TVertexNumber getVertexNumber() const {
+        return vertex_number_;
+    }
+
+    TVertex getSource() const {
+        return source_;
+    }
+
+    TVertex getSink() const {
+        return sink_;
+    }
+
+    TFlow getFlowValue() const {
+        TFlow flow = 0;
+
+        for (auto edge_num : graph_[source_]) {
+            const auto& edge = edges_[edge_num];
+            flow += edge.flow;
+        }
+
+        return flow;
+    }
+
+private:
+    struct TEdge_ {
+        TVertex finish;
+        TFlow   flow;
+        TFlow   capacity;
+
+        TEdge_(TVertex finish, TFlow flow, TFlow capacity) :
+            finish(finish),
+            flow(flow),
+            capacity(capacity)
+        {}
+    };
+
+    std::vector< std::vector<TEdgeNum> > graph_;
+    std::vector<TEdge_> edges_;
+    TVertex vertex_number_;
+    TVertex source_;
+    TVertex sink_;
+};
+
+} // end of namespace NFlow
+
+
+namespace NMalhotra {
+
+template<typename TFlow>
+class TMalhotra {
+public:
+    typedef NFlow::TNetwork<TFlow> TNetwork;
+
+    TMalhotra(const TNetwork& network) :
+        network_(network)
+    {
+        const auto vertex_number = network.getVertexNumber();
+        incoming_potential_.resize(vertex_number);
+        outcoming_potential_.resize(vertex_number);
+        is_available_.resize(vertex_number);
+        graph_.resize(vertex_number);
+        reversed_graph_.resize(vertex_number);
+
+        findMaxFlow_();
+    }
+
+    const TNetwork& getNetwork() const {
+        return network_;
+    }
+
+private:
+    typedef typename TNetwork::TVertex       TVertex_;
+    typedef typename TNetwork::TVertexNumber TVertexNumber_;
+    typedef typename TNetwork::TEdgeNum      TEdgeNum_;
+    typedef typename TNetwork::TEdgeIterator TEdgeIterator_;
+    typedef unsigned int                TDist_;
+    typedef std::make_unsigned_t<TFlow> TPotential_;
+
+    struct Edge_ {
+        TVertex_       finish;
+        TEdgeIterator_ network_edge;
+        Edge_(TVertex_ finish, TEdgeIterator_ network_edge) :
+            finish(finish),
+            network_edge(network_edge)
+        {}
+    };
+
+    TNetwork network_;
+    std::vector<TPotential_>          incoming_potential_;
+    std::vector<TPotential_>          outcoming_potential_;
+    std::vector<bool>                 is_available_;
+    std::vector< std::vector<Edge_> > graph_;
+    std::vector< std::vector<Edge_> > reversed_graph_;
+
+    TPotential_ getPotential_(TVertex_ vertex) {
+        if (vertex == network_.getSource()) {
+            return outcoming_potential_[vertex];
+        }
+        if (vertex == network_.getSink()) {
+            return incoming_potential_[vertex];
+        }
+        return std::min(incoming_potential_[vertex], outcoming_potential_[vertex]);
+    }
+
+    TVertex_ getMinPotentialVertex_() {
+        TVertex_ min_potential_vertex = network_.getSource();
+        for (TVertexNumber_ vertex = 0; vertex < network_.getVertexNumber(); ++vertex) {
+            if (is_available_[vertex] && getPotential_(vertex) < getPotential_(min_potential_vertex)) {
+                min_potential_vertex = vertex;
+            }
+        }
+        return min_potential_vertex;
+    }
+
+    void removeZeroPotentialVertex_(TVertex_ vertex) {
+        is_available_[vertex] = false;
+        for (const auto edge : graph_[vertex]) {
+            incoming_potential_[edge.finish] -= edge.network_edge.getResudialCapacity();
+        }
+        for (const auto edge : reversed_graph_[vertex]) {
+            outcoming_potential_[edge.finish] -= edge.network_edge.getResudialCapacity();
+        }
+    }
+
+    void findMaxFlow_() {
+        while(build_graph_()) {
+            removeIncorrectEdges_();
+            calcPotential_();
+            const auto source = network_.getSource();
+            const auto sink   = network_.getSink();
+            while(std::min(getPotential_(source), getPotential_(sink)) > 0) {
+                const auto min_potential_vertex = getMinPotentialVertex_();
+                if (getPotential_(min_potential_vertex) == 0) {
+                    removeZeroPotentialVertex_(min_potential_vertex);
+                } else {
+                    pushFlow_(min_potential_vertex);
+                }
+            }
+        }
+    }
+
+    bool build_graph_() {
+        const auto INF           = std::numeric_limits<TDist_>::max();
+        const auto vertex_number = network_.getVertexNumber();
+        const auto source        = network_.getSource();
+        const auto sink          = network_.getSink();
+        for (TVertexNumber_ vertex = 0; vertex < vertex_number; ++vertex) {
+            is_available_[vertex] = false;
+            graph_[vertex].clear();
+            reversed_graph_[vertex].clear();
+        }
+        std::vector<TDist_> dist(vertex_number, INF);
+        dist[source] = 0;
+
+        std::queue<TVertex_> queue;
+        queue.push(source);
+
+        while(!queue.empty()) {
+            const auto cur_vertex = queue.front();
+            queue.pop();
+            for (auto it = network_.getEdgeIterator(cur_vertex); !it.isEnd(); ++it) {
+                const auto cur_finish = it.getFinish();
+                if (it.getResudialCapacity() > 0){
+                    if (dist[cur_finish] == INF) {
+                        dist[cur_finish] = dist[cur_vertex] + 1;
+                        queue.push(cur_finish);
+                    }
+
+                    if (dist[cur_finish] == dist[cur_vertex] + 1) {
+                        graph_[cur_vertex].emplace_back(cur_finish, it);
+                        reversed_graph_[cur_finish].emplace_back(cur_vertex, it);
+                    }
+                }
+            }
+        }
+
+        if (dist[sink] == INF) {
+            return false;
+        }
+
+        dist.assign(vertex_number, INF);
+        dist[sink] = 0;
+        queue.push(sink);
+
+        while(!queue.empty()) {
+            const auto cur_vertex = queue.front();
+            queue.pop();
+            for (const auto& edge : reversed_graph_[cur_vertex]) {
+                if (dist[edge.finish] == INF) {
+                    dist[edge.finish] = dist[cur_vertex] + 1;
+                    queue.push(edge.finish);
+                }
+            }
+        }
+
+        for (TVertexNumber_ vertex = 0; vertex < vertex_number; ++vertex) {
+            is_available_[vertex] = dist[vertex] != INF;
+        }
+
+        return true;
+    }
+
+    void removeIncorrectEdges_() {
+        for (TVertexNumber_ vertex = 0; vertex < network_.getVertexNumber(); ++vertex) {
+            if (!is_available_[vertex]) {
+                graph_[vertex].clear();
+                reversed_graph_[vertex].clear();
+            } else {
+                TEdgeNum_ edge_num = 0;
+                auto& graph = graph_[vertex];
+                while(edge_num < graph.size()) {
+                    if (!is_available_[graph[edge_num].finish]) {
+                        std::swap(graph[edge_num], graph.back());
+                        graph.pop_back();
+                    } else {
+                        ++edge_num;
+                    }
+                }
+
+                auto& reversed_graph = reversed_graph_[vertex];
+                while(edge_num < reversed_graph.size()) {
+                    if (!is_available_[reversed_graph[edge_num].finish]) {
+                        std::swap(reversed_graph[edge_num], reversed_graph.back());
+                        reversed_graph.pop_back();
+                    } else {
+                        ++edge_num;
+                    }
+                }
+            }
+        }
+    }
+
+    void calcPotential_() {
+        for (TVertexNumber_ vertex = 0; vertex < network_.getVertexNumber(); ++vertex) {
+            incoming_potential_[vertex]  = 0;
+            outcoming_potential_[vertex] = 0;
+            for (const auto& edge : reversed_graph_[vertex]) {
+                incoming_potential_[vertex] += edge.network_edge.getResudialCapacity();
+            }
+            for (const auto& edge : graph_[vertex]) {
+                outcoming_potential_[vertex] += edge.network_edge.getResudialCapacity();
+            }
+        }
+    }
+
+    void pushFlow_(TVertex_ min_potential_vertex) {
+        TFlow flow_value = getPotential_(min_potential_vertex);
+        std::queue< std::pair<TVertex_, TFlow> > queue;
+        queue.push({min_potential_vertex, flow_value});
+
+        while(!queue.empty()) {
+            auto [cur_vertex, flow] = queue.front();
+            queue.pop();
+            if (cur_vertex == network_.getSink()) {
+                continue;
+            }
+            auto& graph = graph_[cur_vertex];
+            while(flow) {
+                auto& cur_edge = graph.back();
+                if (!is_available_[cur_edge.finish] || cur_edge.network_edge.getResudialCapacity() == 0) {
+                    graph.pop_back();
+                } else {
+                    TFlow cur_flow = std::min(flow, cur_edge.network_edge.getResudialCapacity());
+                    cur_edge.network_edge.pushFlow(cur_flow);
+                    outcoming_potential_[cur_vertex]     -= cur_flow;
+                    incoming_potential_[cur_edge.finish] -= cur_flow;
+                    flow                                 -= cur_flow;
+                    queue.push({cur_edge.finish, cur_flow});
+                }
+            }
+        }
+
+        queue.push({min_potential_vertex, flow_value});
+
+        while(!queue.empty()) {
+            auto [cur_vertex, flow] = queue.front();
+            queue.pop();
+            if (cur_vertex == network_.getSource()) {
+                continue;
+            }
+            auto& graph = reversed_graph_[cur_vertex];
+            while(flow) {
+                auto& cur_edge = graph.back();
+                if (!is_available_[cur_edge.finish] || cur_edge.network_edge.getResudialCapacity() == 0) {
+                    graph.pop_back();
+                } else {
+                    TFlow cur_flow = std::min(flow, cur_edge.network_edge.getResudialCapacity());
+                    cur_edge.network_edge.pushFlow(cur_flow);
+                    incoming_potential_[cur_vertex]       -= cur_flow;
+                    outcoming_potential_[cur_edge.finish] -= cur_flow;
+                    flow                                  -= cur_flow;
+                    queue.push({cur_edge.finish, cur_flow});
+                }
+            }
+        }
+    }
+};
+
+} // end of namespace NMalhotra
+
+
+namespace NGoldberg {
+
+template<typename TFlow>
+class TGoldberg {
+public:
+    typedef NFlow::TNetwork<TFlow> TNetwork;
+
+    TGoldberg(const TNetwork& network) :
+        network_(network)
+    {
+        const auto vertex_number = network.getVertexNumber();
+        height_.resize(vertex_number);
+        potential_.resize(vertex_number);
+        for (TVertexNumber_ vertex = 0; vertex < vertex_number; ++vertex) {
+            edge_iterator_.push_back(network_.getEdgeIterator(vertex));
+        }
+        findMaxFlow_();
+    }
+
+    const TNetwork& getNetwork() const {
+        return network_;
+    }
+
+private:
+    typedef typename TNetwork::TVertex       TVertex_;
+    typedef typename TNetwork::TVertexNumber TVertexNumber_;
+    typedef typename TNetwork::TEdgeIterator TEdgeIterator_;
+    typedef unsigned int THeight_;
+    typedef std::make_unsigned_t<TFlow> TPotential_;
+
+    TNetwork network_;
+    std::vector<THeight_>       height_;
+    std::vector<TPotential_>    potential_;
+    std::vector<TEdgeIterator_> edge_iterator_;
+    std::queue<TVertex_>        overflowed_vertexes_;
+
+    void pushFlow(TVertex_ vertex, TEdgeIterator_ edge) {
+        const TFlow flow = std::min(potential_[vertex], (TPotential_)edge.getResudialCapacity());
+        const auto source = network_.getSource();
+        const auto sink   = network_.getSink();
+        if (vertex != source && vertex != sink) {
+            potential_[vertex] -= flow;
+        }
+        const auto finish = edge.getFinish();
+        if (finish != source && finish != sink) {
+            potential_[finish] += flow;
+        }
+        edge.pushFlow(flow);
+    }
+
+    void relabel(TVertex_ vertex) {
+        THeight_ new_height = std::numeric_limits<THeight_>::max();
+        for (auto it = network_.getEdgeIterator(vertex); !it.isEnd(); ++it) {
+            if (it.getResudialCapacity() > 0) {
+                new_height = std::min(new_height, height_[it.getFinish()] + 1);
+            }
+        }
+        height_[vertex] = new_height;
+    }
+
+    void discharge(TVertex_ vertex) {
+        auto& edge = edge_iterator_[vertex];
+        while(potential_[vertex] > 0) {
+            if (edge.isEnd()) {
+                relabel(vertex);
+                edge = network_.getEdgeIterator(vertex);
+            } else {
+                const TVertex_ finish = edge.getFinish();
+                if (edge.getResudialCapacity() > 0 && height_[vertex] == height_[finish] + 1) {
+                    const bool was_overflowed = potential_[finish] > 0;
+                    pushFlow(vertex, edge);
+                    if (!was_overflowed && potential_[finish] > 0) {
+                        overflowed_vertexes_.push(finish);
+                    }
+                } else {
+                    ++edge;
+                }
+            }
+        }
+    }
+
+    void findMaxFlow_() {
+        for (TVertexNumber_ vertex = 0; vertex < network_.getVertexNumber(); ++vertex) {
+            potential_[vertex] = 0;
+            height_[vertex]    = 0;
+        }
+
+        const auto source = network_.getSource();
+        height_[source] = network_.getVertexNumber();
+
+        for (auto it = network_.getEdgeIterator(source); !it.isEnd(); ++it) {
+            const auto cur_finish = it.getFinish();
+            const auto sink       = network_.getSink();
+            const auto flow       = it.getResudialCapacity();
+            it.pushFlow(flow);
+            if (cur_finish != sink) {
+                potential_[cur_finish] += flow;
+            }
+
+            if (potential_[cur_finish] > 0) {
+                overflowed_vertexes_.push(cur_finish);
+            }
+        }
+
+        while(!overflowed_vertexes_.empty()) {
+            const auto cur_vertex = overflowed_vertexes_.front();
+            overflowed_vertexes_.pop();
+            discharge(cur_vertex);
+        }
+    }
+};
+
+} // end of namespace NGoldberg
+
+
+int main(){
+    int n;
+    std::cin >> n;
+    std::vector<int> cost(n);
+    for (int i = 0; i < n; i++) {
+        std::cin >> cost[i];
+    }
+
+    const int INF = std::numeric_limits<int>::max();
+    const unsigned int source = n;
+    const unsigned int sink = n + 1;
+    NFlow::TNetwork<int> network(n + 2, source, sink);
+
+    for (int vertex = 0; vertex < n; vertex++) {
+        int cnt;
+        std::cin >> cnt;
+        while(cnt--) {
+            int parent;
+            std::cin >> parent;
+            parent--;
+            network.addEdge(vertex, parent, INF);
+        }
+    }
+
+    int result = 0;
+
+    for (int vertex = 0; vertex < n; vertex++) {
+        if (cost[vertex] > 0) {
+            result += cost[vertex];
+            network.addEdge(source, vertex, cost[vertex]);
+        } else {
+            network.addEdge(vertex, sink, -cost[vertex]);
+        }
+    }
+
+    NMalhotra::TMalhotra malhotra(network);
+    const auto malhotra_result_network = malhotra.getNetwork();
+
+    NGoldberg::TGoldberg goldberg(network);
+    const auto goldberg_result_network = goldberg.getNetwork();
+
+    assert(malhotra_result_network.getFlowValue() == goldberg_result_network.getFlowValue());
+
+    std::cout << result - malhotra_result_network.getFlowValue();
+}
 ```
 ## <center>GaussModulo</center>
 ```c++
@@ -2525,6 +3134,40 @@ int32_t main()
     return 0;
 }
 ```
+## <center>isSegmentsIntersect</center>
+```c++
+int ptInSeg(const pt& t, pair<pt, pt>& a){
+    if (((t - a.x) % (a.y - a.x)) != 0) return 0;
+    else if (((t - a.x) * (a.y - a.x)) >= 0 && ((t - a.y) * (a.x - a.y)) >= 0) return 1;
+    return 0;
+}
+
+int sign(ll val){
+    if (val > 0) return 1;
+    if (val < 0) return -1;
+    return 0;
+}
+
+bool ok(int a, int b, int c, int d){
+    if (a > b) swap(a, b);
+    if (c > d) swap(c, d);
+    return max(a, c) <= min(b, d);
+}
+
+int intersect(pair<pt, pt> &a, pair<pt, pt> &b){
+    if (a.x == a.y && b.x == b.y) return a.x == b.x;
+    if (a.x == a.y){
+        return ptInSeg(a.x, b);
+    } else if (b.x == b.y){
+        return ptInSeg(b.x, a);
+    } else {
+        int val1 = sign((b.x - a.x) % (a.y - a.x)) * sign((b.y - a.x) % (a.y - a.x));
+        int val2 = sign((a.x - b.x) % (b.y - b.x)) * sign((a.y - b.x) % (b.y - b.x));
+        if (val1 > 0 || val2 > 0) return 0;
+        return ok(a.x.x, a.y.x, b.x.x, b.y.x) && ok(a.x.y, a.y.y, b.x.y, b.y.y);
+    }
+}
+```
 ## <center>Matiroids</center>
 ```c++
 #include <bits/stdc++.h>
@@ -2805,6 +3448,96 @@ int main() {
 	}
 }
 ```
+## <center>NearestPoints</center>
+```c++
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define x first
+#define y second
+#define ll long long
+#define db long double
+
+struct pt{
+    ll x, y;
+    pt() {}
+    pt(ll x, ll y): x(x), y(y) {}
+
+    pt operator- (const pt& nxt) const { return pt(x - nxt.x, y - nxt.y); }
+    db len() const { return sqrtl(x * x + y * y); }
+};
+
+int n;
+db ans = 1e18;
+
+pt t1[200007];
+pt t2[200007];
+
+const int CC = 5;
+void solve(vector<pt>& a){
+    if (a.size() <= 5){
+        for (int i = 0; i < a.size(); i++) for (int j = i + 1; j < a.size(); j++) ans = min(ans, (a[i] - a[j]).len());
+        return;
+    }
+    
+    sort(a.begin(), a.end(), [](const pt& a, const pt& b){
+        return a.x < b.x || a.x == b.x && a.y < b.y;
+    });
+
+    vector<pt> w1((int)a.size() / 2), w2((int)a.size() - (int)a.size() / 2);
+
+    ll xx = -1;
+
+    for (int i = 0; i < a.size(); i++){
+        if (i < w1.size()){
+            w1[i] = a[i];
+            xx = a[i].x;
+        } else {
+            w2[i - (int)w1.size()] = a[i];
+        }
+    }
+
+    solve(w1), solve(w2);
+
+    int p1 = 0, p2 = 0;
+    for (auto&& p : w1) if (abs(xx - p.x) <= ans + 1) t1[p1++] = p;
+    for (auto&& p : w2) if (abs(xx - p.x) <= ans + 1) t2[p2++] = p;
+
+    int pp = 0;
+    for (int i = 0; i < p1; i++){
+        while(pp < p2 && t2[pp].y <= t1[i].y) pp++;
+        for (int j = pp - CC; j <= pp + CC; j++){
+            if (j >= p2) break;
+            if (j < 0) continue;
+            ans = min(ans, (t1[i] - t2[j]).len());
+        }
+    }
+
+    p1 = 0, p2 = 0;
+    for (int i = 0; i < a.size(); i++){
+        if (p1 == w1.size()) a[i] = w2[p2++];
+        else if (p2 == w2.size()) a[i] = w1[p1++];
+        else if (w1[p1].y < w2[p2].y) a[i] = w1[p1++];
+        else a[i] = w2[p2++];
+    }
+}
+
+int main(){
+    //freopen("F_input.txt", "r", stdin);
+    ios_base::sync_with_stdio(0); cin.tie(0);
+
+    cin >> n;
+    vector<pt> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i].x >> a[i].y;
+
+    solve(a);
+
+    cout.precision(10);
+    cout << fixed << ans;
+}
+```
 ## <center>PalindromicTree</center>
 ```c++
 struct vert{
@@ -2843,6 +3576,194 @@ int main() {
     cin >> s;
     for (int i = 0; i < s.size(); i++){
         cout << t.addChar(s[i]);
+    }
+}
+```
+## <center>segmentAndCircleIntersections</center>
+```c++
+#include <bits/stdc++.h>
+#define ll long long
+#define db long double
+#define x first
+#define y second
+#define mp make_pair
+#define pb push_back
+#define all(a) a.begin(), a.end()
+
+using namespace std;
+
+struct pt{
+    ll x, y;
+    pt() {}
+    pt(ll x, ll y): x(x), y(y) {}
+    pt operator-(const pt& nxt) const { return pt(x - nxt.x, y - nxt.y); }
+    pt operator+(const pt& nxt) const { return pt(x + nxt.x, y + nxt.y); }
+    bool operator==(const pt& nxt) const { return x == nxt.x && y == nxt.y; }
+    ll operator*(const pt& nxt) const { return x * nxt.x + y * nxt.y; }
+    ll operator%(const pt& nxt) const { return x * nxt.y - y * nxt.x; }
+    db len() const { return sqrtl(x * x + y * y); }
+    ll sq_len() const { return x * x + y * y; }
+};
+
+ll convert(string s){
+    int sign = 1;
+    if (s.size() && s[0] == '-') sign = -1, reverse(all(s)), s.pop_back(), reverse(all(s));
+    ll ans = 0, ans2 = 0;
+    bool f = 0;
+    int cnt = 0;
+    for (auto c : s){
+        if (c >= '0' && c <= '9'){
+            if (!f) ans = ans * 10 + (c - '0');
+            else ans2 = ans2 * 10 + (c - '0'), cnt++;
+        } else {
+            f = 1;
+        }
+    }
+
+    if (cnt == 1) ans2 *= 10;
+    return (ans * 100 + ans2) * sign;
+}
+
+struct line{
+    ll a, b, c;
+    line() {}
+    line(pt w1, pt w2){
+        a = w2.y - w1.y;
+        b = w1.x - w2.x;
+        c = -(a * w1.x + b * w1.y);
+    }
+};
+
+int sign(ll val){
+    if (val > 0) return 1;
+    if (val < 0) return -1;
+    return 0;
+}
+
+
+const db eps = 1e-8;
+bool cmp(const pair<db, db>& a, const pair<db, db>& b){
+    if (abs(a.x - b.x) < eps) return a.y < b.y;
+    return a.x < b.x;
+}
+
+const int CC = 10;
+
+void solve(pt t, ll r, pt a, pt b){
+    if (a == b){
+        if ((a - t).sq_len() == r * r){
+            cout << 1 << "\n";
+            cout.precision(CC);
+            cout << fixed << (db)a.x / 100 << ' ' << (db)a.y / 100 << "\n";
+        } else {
+            cout << "0\n";
+        }
+        return;
+    }
+
+    line l(a, b);
+    
+    if (r == 0){
+        if (l.a * t.x + l.b * t.y + l.c == 0){
+            cout.precision(CC);
+            if (((a - t) * (b - t)) <= 0) cout << "1\n", cout << fixed << (db)t.x / 100 << ' ' << (db)t.y / 100 << "\n";
+            else cout << "0\n";
+        } else {
+            cout << "0\n";
+        }
+        return;
+    }
+
+    if (l.a * t.x + l.b * t.y + l.c == 0){
+        vector<pair<db, db> > ans;
+        pt v1 = a - t, v2 = b - t;
+        if (((a - t) * (b - t)) < 0){
+            if (v1.sq_len() >= r * r) ans.pb({ t.x + (db)v1.x / v1.len() * r, t.y + (db)v1.y / v1.len() * r });
+            if (v2.sq_len() >= r * r) ans.pb({ t.x + (db)v2.x / v2.len() * r, t.y + (db)v2.y / v2.len() * r });
+        } else {
+            if (v1.sq_len() < v2.sq_len()) swap(v1, v2);
+            if (v2.sq_len() <= r * r && r * r <= v1.sq_len()) ans.pb({ t.x + (db)v1.x / v1.len() * r, t.y + (db)v1.y / v1.len() * r });
+        }
+
+        sort(all(ans), cmp);
+        cout << ans.size() << "\n";
+        cout.precision(CC);
+        for (auto c : ans) cout << fixed << c.x / 100 << ' ' << c.y / 100 << "\n";
+        return;
+    }
+
+    ll d = abs(l.a * t.x + l.b * t.y + l.c);
+    ll f = l.a * l.a + l.b * l.b;
+    // d * d <= r * r * f
+    __int128_t val1 = d * (__int128_t)d;
+    __int128_t val2 = r * (__int128_t)r * (__int128_t)f;
+    
+    if (val1 > val2){
+        cout << "0\n";
+        return;
+    }
+
+    pt v(l.a, l.b);
+    if ((a - t) % (b - t) > 0) swap(a, b);
+    if (sign((b - a) % (t - a)) == sign((b - a) % v)) v = { -v.x, -v.y };
+
+    if (val1 == val2){
+        if ((v % (a - t)) >= 0 && ((b - t) % v) >= 0){
+            cout << "1\n";
+            cout.precision(CC);
+            cout << fixed << (t.x + (db)v.x / v.len() * r) / 100 << ' ' << (t.y + (db)v.y / v.len() * r) / 100 << "\n";;
+        } else {
+            cout << "0\n";
+        }
+    } else {
+        vector<pair<db, db> > ans;
+
+        db dist = (db)d / sqrtl(f);
+        pair<db, db> sr = { t.x + (db)v.x / v.len() * dist, t.y + (db)v.y / v.len() * dist };
+        pair<db, db> v1 = { a.x - sr.x, a.y - sr.y };
+        pair<db, db> v2 = { b.x - sr.x, b.y - sr.y };
+        db m1 = sqrtl(v1.x * v1.x + v1.y * v1.y);
+        db m2 = sqrtl(v2.x * v2.x + v2.y * v2.y);
+        db le = sqrtl(r * r - dist * dist);
+
+        if ((v % (a - t)) >= 0 && ((b - t) % v) >= 0){
+            if ((t - a).sq_len() >= r * r) ans.pb({ sr.x + v1.x / m1 * le, sr.y + v1.y / m1 * le });
+            if ((t - b).sq_len() >= r * r) ans.pb({ sr.x + v2.x / m2 * le, sr.y + v2.y / m2 * le });
+        } else {
+            pt w1 = a - t, w2 = b - t;
+            bool f = 0;
+            if (w1.sq_len() < w2.sq_len()) swap(w1, w2), f = 1;
+            
+            pair<db, db> v; db m;
+            if (!f){
+                v = v1;
+                m = m1;
+            } else {
+                v = v2;
+                m = m2;
+            }
+            
+            if (w2.sq_len() <= r * r && r * r <= w1.sq_len()) ans.pb({ sr.x + v.x / m * le, sr.y + v.y / m * le });
+        }
+
+        sort(all(ans), cmp);
+        cout << ans.size() << "\n";
+        cout.precision(CC);
+        for (auto c : ans) cout << fixed << c.x / 100 << ' ' << c.y / 100 << "\n";
+    }
+}
+
+int main(){
+#ifdef LOCAL
+	freopen("F_input.txt", "r", stdin);
+	//freopen("C_output.txt", "w", stdout);
+#endif
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+    string x0, y0, r, x1, y1, x2, y2;
+    while(cin >> x0 >> y0 >> r >> x1 >> y1 >> x2 >> y2){
+        solve(pt(convert(x0), convert(y0)), convert(r), pt(convert(x1), convert(y1)), pt(convert(x2), convert(y2)));
+        cout << "\n";
     }
 }
 ```
