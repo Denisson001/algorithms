@@ -13,6 +13,7 @@ struct MinCostMaxFlow {
     Edge e[MAX_E];
     vector<int> g[MAX_V];
     int fb[MAX_V];
+    int was[MAX_V];
     pair<int, int> prev[MAX_V];
 
     void addEdge(int v, int to, int cap, int cost){
@@ -26,19 +27,23 @@ struct MinCostMaxFlow {
         ll ans = 0;
 
         while (required_flow) {
-            for (int i = 0; i < MAX_V; i++) fb[i] = INF, prev[i] = { -1, -1 };
+            for (int i = 0; i < MAX_V; i++) fb[i] = INF, prev[i] = { -1, -1 }, was[i] = 0;
             fb[start] = 0;
             vector<int> st;
             int uk = 0;
             st.push_back(start);
             while (uk < st.size()) {
                 int v = st[uk++];
+		was[v] = 0;
                 for (int to : g[v]) {
                     auto ed = e[to];
                     if (ed.flow < ed.cap && fb[ed.to] > fb[v] + ed.cost) {
                         prev[ed.to] = { v, to };
                         fb[ed.to] = fb[v] + ed.cost;
-                        st.push_back(ed.to);
+                        if (!was[ed.to]) {
+		    	    st.push_back(ed.to);
+			    was[ed.to] = 1;
+			}
                     }
                 }
             }
