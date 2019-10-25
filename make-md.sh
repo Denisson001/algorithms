@@ -7,7 +7,7 @@ touch $tmp_file
 
 IFS=$""``
 
-dirs=("algorithms" "inProgress" "e-maxx")
+dirs=("teambook" "addition")
 
 for dir in ${dirs[@]}; do
     for file in $(pwd)/$dir/*; do

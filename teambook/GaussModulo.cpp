@@ -1,4 +1,4 @@
-truct GaussModulo {
+struct GaussModulo {
     int mult(int a, int b){
         return a * (ll)b % mod;
     }
