@@ -8,6 +8,7 @@ struct MinCostMaxFlow {
     static const int MAX_V = 603;
     static const int MAX_E = 2 * 333 * 333;
     static const int INF = 1e9 + 7;
+    static const int MAX_COST = 1e9 + 7; // change to ll if it is exceeded in FB
 
     int sz = 0;
     Edge e[MAX_E];
@@ -23,13 +24,22 @@ struct MinCostMaxFlow {
         e[sz++] = { v, 0, 0, -cost };
     }
 
-    void calcPhi() {
+    void calcPhi(int start) {
         // FB for calculating phi, add vertex q and q->v for all v with cost 0
-        for (int i = 0; i < MAX_V; ++i) phi[i] = 0;
+        for (int i = 0; i < MAX_V; ++i) phi[i] = MAX_COST;
+        phi[start] = 0;
+        for (int k = 0; k < MAX_V; k++) {
+            for (int v = 0; v < MAX_V; v++) {
+                for (int to : g[v]) {
+                    Edge &ed = e[to];
+                    phi[ed.to] = min(phi[ed.to], phi[v] + ed.cost);
+                }
+            }
+        }
     }
 
     ll find(int start, int finish, int required_flow) {
-        calcPhi();
+        calcPhi(start);
 
         ll ans = 0;
 
