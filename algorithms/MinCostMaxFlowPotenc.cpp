@@ -32,6 +32,7 @@ struct MinCostMaxFlow {
             for (int v = 0; v < MAX_V; v++) {
                 for (int to : g[v]) {
                     Edge &ed = e[to];
+                    if (ed.cap == ed.flow) continue;
                     phi[ed.to] = min(phi[ed.to], phi[v] + ed.cost);
                 }
             }
