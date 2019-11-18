@@ -1,7 +1,12 @@
 // returns min k : L <= (a * k) mod M <= R, or -1 if there`re no solution
-// a != 0, L <= R
+// L <= R
 // O(logM)
 int solveDiophantineInequality(int a, int M, int L, int R) {
+    a %= M;
+    if (a==0){
+        if (L==0) return 0;
+        return -1;
+    }
     int solution = (L + a - 1) / a;
     if (a * (long long)solution <= R) {
         return solution;
