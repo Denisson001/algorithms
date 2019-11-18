@@ -2,14 +2,6 @@
 // a != 0, L <= R
 // O(logM)
 int solveDiophantineInequality(int a, int M, int L, int R) {
-    if (a == 0) {
-        if (L <= 0 && 0 <= R) {
-            return 0;
-        } else {
-            return -1;
-        }
-    }
-
     int solution = (L + a - 1) / a;
     if (a * (long long)solution <= R) {
         return solution;
@@ -27,6 +19,6 @@ int solveDiophantineInequality(int a, int M, int L, int R) {
     if (solution == -1) {
         return -1;
     }
-    solution = (solution * M + L + a - 1) / a;
+    solution = (solution * (long long)M + L + a - 1) / a;
     return solution;
 }
