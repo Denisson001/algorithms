@@ -1,5 +1,4 @@
 #include <bits/stdc++.h>
-#define minus djsf
 #define ll long long
 #define db long double
 #define x first
