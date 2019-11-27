@@ -1,3 +1,13 @@
+const int MAX_MEM = 1e8;
+int mpos = 0;
+char mem[MAX_MEM];
+void * operator new ( size_t n ) {
+    char *res = mem + mpos;
+    mpos += n;
+    return (void *)res;
+}
+void operator delete ( void * ) { }
+
 1. /** Interface */
 2.  
 3. inline int readChar();

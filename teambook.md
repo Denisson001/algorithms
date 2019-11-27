@@ -129,69 +129,6 @@ vector<plane<ll>> build3DConvexHull(vector<pt<ll>> &a){
     return ans;
 }
 ```
-## <center>Aho</center>
-```c++
-struct Aho{
-    struct Vert{
-        int to[26], au[26];
-        int suf, p, c;
-        Vert() { for (int i = 0; i < 26; i++) to[i] = -1, au[i] = 0; suf = 0; }
-    };
-
-    Vert t[200007];
-    int sz;
-
-    Aho() { sz = 1; }
-
-    int add(string &s){
-        int v = 0;
-        for (char c : s){
-            int now = c - 'a';
-            if (t[v].to[now] == -1) t[sz].p = v, t[sz].c = now, t[v].to[now] = sz++;
-            v = t[v].to[now];
-        }
-        return v;
-    }
-
-    void buildSuf(){
-        vector<int> st;
-        int uk = 0;
-        st.push_back(0);
-        while(uk < st.size()){
-            int v = st[uk++];
-            if (v == 0 || t[v].p == 0) t[v].suf = 0;
-            else {
-                int cur = t[t[v].p].suf;
-                while(1){
-                    if (t[cur].to[t[v].c] != -1){
-                        t[v].suf = t[cur].to[t[v].c];
-                        break;
-                    }
-                    if (cur == 0) break;
-                    cur = t[cur].suf;
-                }
-            }
-            for (int i = 0; i < 26; i++) if (t[v].to[i] != -1) st.pb(t[v].to[i]);
-        }
-    }
-
-    void buildAu(){
-        vector<int> st;
-        int uk = 0;
-        st.push_back(0);
-        while(uk < st.size()){
-            int v = st[uk++];
-            for (int i = 0; i < 26; i++){
-                if (t[v].to[i] != -1) t[v].au[i] = t[v].to[i];
-                else {
-                    t[v].au[i] = t[t[v].suf].au[i];
-                }
-            }
-            for (int i = 0; i < 26; i++) if (t[v].to[i] != -1) st.pb(t[v].to[i]);
-        }
-    }
-};
-```
 ## <center>AndConvolution</center>
 ```c++
 const int K = 1<<17;
@@ -300,56 +237,6 @@ int main()
 	init();
 }
 ```
-## <center>CnkPrimeModulo</center>
-```c++
-#include <bits/stdc++.h>
-#define ll long long
-#define ull unsigned long long
-#define db long double
-
-using namespace std;
-
-struct SmallCnk{
-
-	int mod; //modulo must be prime
-	vector<int> fac, infac;
-
-	int mult(int x, int y){
-		return ((ll) x * (ll) y) % (ll) mod;
-	}
-
-	int pw(int x, int y){
-		if (y==0) return 1;
-		if (y==1) return x%mod;
-		if (y%2) return mult(x, pw(x, y-1));
-		int R = pw(x, y/2);
-		return mult(R, R);
-	}
-
-	SmallCnk(int given_modulo){
-		mod = given_modulo;
-		fac.push_back(1);
-		for (int i=1; i < mod; ++i) fac.push_back(mult(i, fac.back()));
-		for (int i=0; i < mod; ++i) infac.push_back(pw(fac[i], mod-2)); 
-	}
-
-	int smallcnk(int n, int k){
-	    if (k > n || k < 0) return 0;
-	    return mult(fac[n], mult(infac[k], infac[n-k]));
-	}
-	 
-	int cnk(ll n, ll k){
-	    int ans = 1;
-	    while(k > 0 || n > 0){
-	        ans = mult(ans, smallcnk(n%mod, k%mod));
-	        k /= mod;
-	        n /= mod;
-	    }
-	    return ans;
-	}
-
-};
-```
 ## <center>DinicWithScaling</center>
 ```c++
 #define pb push_back
@@ -429,6 +316,38 @@ struct Dinic{
         return flow;
     }
 } dinic;
+```
+## <center>DiophantineInequality</center>
+```c++
+// returns min k : L <= (a * k) mod M <= R, or -1 if there`re no solution
+// L <= R
+// O(logM)
+int solveDiophantineInequality(int a, int M, int L, int R) {
+    a %= M;
+    if (a==0){
+        if (L==0) return 0;
+        return -1;
+    }
+    int solution = (L + a - 1) / a;
+    if (a * (long long)solution <= R) {
+        return solution;
+    }
+
+    if (2 * a > M) {
+        return solveDiophantineInequality(M - a, M, M - R, M - L);
+    }
+
+    if (M % a == 0) {
+        return -1;
+    }
+
+    solution = solveDiophantineInequality(a - M % a, a, L % a, R % a);
+    if (solution == -1) {
+        return -1;
+    }
+    solution = (solution * (long long)M + L + a - 1) / a;
+    return solution;
+}
 ```
 ## <center>DominatorTree</center>
 ```c++
@@ -535,6 +454,177 @@ struct DominatorTree{
         }
     }
 };
+```
+## <center>FastTwoChinese</center>
+```c++
+#include <bits/stdc++.h>
+
+#define ll long long
+#define db long double
+#define x first
+#define y second
+#define mp make_pair
+#define pb push_back
+#define all(a) a.begin(), a.end()
+#define ipair pair<int, int>
+
+using namespace std;
+const ll LINF = 1e15;
+
+namespace twoc { //addEdge(u, v, cost)
+    //init(n) - before the running
+    //solve(root) - flow
+    //the result is ll (probably?)
+    struct Heap {
+        static Heap *null;
+        ll x, xadd;
+        int ver, h;
+        int ei;
+        Heap *l, *r;
+
+        Heap(ll xx, int vv) : x(xx), xadd(0), ver(vv), h(1), l(null), r(null) {}
+
+        Heap(const char *) : x(0), xadd(0), ver(0), h(0), l(this), r(this) {}
+
+        void add(ll a) {
+            x += a;
+            xadd += a;
+        }
+
+        void push() {
+            if (l != null)l->add(xadd);
+            if (r != null)r->add(xadd);
+            xadd = 0;
+        }
+    };
+
+    Heap *Heap::null = new Heap("wqeqw");
+
+    Heap *merge(Heap *l, Heap *r) {
+        if (l == Heap::null)return r;
+        if (r == Heap::null)return l;
+        l->push();
+        r->push();
+        if (l->x > r->x)
+            swap(l, r);
+        l->r = merge(l->r, r);
+        if (l->l->h < l->r->h)
+            swap(l->l, l->r);
+        l->h = l->r->h + 1;
+
+        return l;
+    }
+
+    Heap *pop(Heap *h) {
+        h->push();
+        return merge(h->l, h->r);
+    }
+
+    const int N = 666666;
+
+    struct DSU {
+        int p[N];
+
+        void init(int nn) { iota(p, p + nn, 0); }
+
+        int get(int x) { return p[x] == x ? x : p[x] = get(p[x]); }
+
+        void merge(int x, int y) { p[get(y)] = get(x); }
+    } dsu;
+
+    Heap *eb[N];
+    int n;
+    struct Edge {
+        int x, y;
+        ll c;
+    };
+    vector<Edge> edges;
+    int answer[N];
+
+    void init(int nn) {
+        n = nn;
+        dsu.init(n);
+        fill(eb, eb + n, Heap::null);
+        edges.clear();
+    }
+
+    void addEdge(int x, int y, ll c) {
+        Heap *h = new Heap(c, x);
+        h->ei = edges.size();
+        edges.push_back({x, y, c});
+        eb[y] = merge(eb[y], h);
+    }
+
+    ll solve(int root = 0) {
+        ll ans = 0;
+        static int done[N], pv[N];
+        memset(done, 0, sizeof(int) * n);
+        done[root] = 1;
+        int tt = 1;
+        int cnum = 0;
+        static vector<ipair > eout[N];
+        for (int i = 0; i < n; ++i)eout[i].clear();
+        for (int i = 0; i < n; ++i) {
+            int v = dsu.get(i);
+            if (done[v])
+                continue;
+            ++tt;
+            while (true) {
+                done[v] = tt;
+                int nv = -1;
+                while (eb[v] != Heap::null) {
+                    nv = dsu.get(eb[v]->ver);
+                    if (nv == v) {
+                        eb[v] = pop(eb[v]);
+                        continue;
+                    }
+                    break;
+                }
+                if (nv == -1)
+                    return LINF;
+                ans += eb[v]->x;
+                eb[v]->add(-eb[v]->x);
+                int ei = eb[v]->ei;
+                eout[edges[ei].x].push_back({++cnum, ei});
+                if (!done[nv]) {
+                    pv[v] = nv;
+                    v = nv;
+                    continue;
+                }
+                if (done[nv] != tt)
+                    break;
+                int v1 = nv;
+                while (v1 != v) {
+                    eb[v] = merge(eb[v], eb[v1]);
+                    dsu.merge(v, v1);
+                    v1 = dsu.get(pv[v1]);
+                }
+            }
+        }
+        memset(answer, -1, sizeof(int) * n);
+        answer[root] = 0;
+        set<ipair > es(all(eout[root]));
+        while (!es.empty()) {
+
+            auto it = es.begin();
+
+            int ei = it->second;
+
+            es.erase(it);
+
+            int nv = edges[ei].y;
+
+            if (answer[nv] != -1)
+
+                continue;
+
+            answer[nv] = ei;
+
+            return ans;
+
+        }
+    }
+}
 ```
 ## <center>FFT</center>
 ```c++
@@ -700,6 +790,624 @@ struct Dinic{
         return flow;
     }
 } dinic;
+```
+## <center>FlowNetwork_Malhotra_Goldberg</center>
+```c++
+#include <iostream>
+#include <stdexcept>
+#include <cassert>
+#include <limits.h>
+#include <optional>
+#include <type_traits>
+#include <vector>
+#include <queue>
+
+
+//Flow Network - addEdge(from, to, cap)
+//Malhotra/Goldberg(network), getNetwork()
+
+namespace NFlow{
+
+template<typename TFlow>
+class TNetwork {
+private:
+    struct TEdge_;
+
+public:
+    typedef unsigned int TVertex;
+    typedef unsigned int TVertexNumber;
+    typedef unsigned int TEdgeNum;
+
+    class TEdgeIterator {
+    friend class TNetwork;
+
+    public:
+        TFlow getFlow() const {
+            return getEdge_().flow;
+        }
+
+        TFlow getCapacity() const {
+            return getEdge_().capacity;
+        }
+
+        TFlow getResudialCapacity() const {
+            return getCapacity() - getFlow();
+        }
+
+        TVertex getFinish() const {
+            return getEdge_().finish;
+        }
+
+        void pushFlow(TFlow flow_value) {
+            const auto edge_num = network_->graph_[vertex_][edge_num_];
+            auto& edges_ = network_->edges_;
+            if (edges_[edge_num].flow + flow_value > edges_[edge_num].capacity) {
+                throw std::logic_error("Edge's flow is bigger than capacity");
+            }
+            edges_[edge_num].flow     += flow_value;
+            edges_[edge_num ^ 1].flow -= flow_value;
+        }
+
+        TEdgeIterator& operator++() {
+            if (edge_num_ < network_->graph_[vertex_].size()) {
+                ++edge_num_;
+            }
+            return *this;
+        }
+
+        bool isEnd() const {
+            return edge_num_ == network_->graph_[vertex_].size();
+        }
+
+    private:
+        typedef unsigned int TEdgeNum_;
+
+        TNetwork* network_;
+        TVertex   vertex_;
+        TEdgeNum_ edge_num_;
+
+        TEdgeIterator(TNetwork* network, TVertex vertex) :
+            network_(network),
+            vertex_(vertex),
+            edge_num_(0)
+        {}
+
+        const TEdge_& getEdge_() const {
+            if (isEnd()) {
+                throw std::out_of_range("Iterator out of range");
+            }
+            const auto edge_num = network_->graph_[vertex_][edge_num_];
+            return network_->edges_[edge_num];
+        }
+    };
+
+    TNetwork(TVertexNumber vertex_number, TVertex source, TVertex sink) :
+        vertex_number_(vertex_number),
+        source_(source),
+        sink_(sink)
+    {
+        if (source >= vertex_number || sink   >= vertex_number) {
+            throw std::out_of_range("Source or sink index is too large");
+        }
+        if (source == sink) {
+            throw std::logic_error("Source and sink are the same");
+        }
+        graph_.resize(vertex_number_);
+    }
+
+    void addEdge(TVertex start, TVertex finish, TFlow capacity) {
+        // add forward edge
+        graph_[start].push_back(edges_.size());
+        edges_.emplace_back(finish, /* flow = */ 0, capacity);
+        // add backward edge
+        graph_[finish].push_back(edges_.size());
+        edges_.emplace_back(start,  /* flow = */ 0, /* capacity = */ 0);
+    }
+
+    TEdgeIterator getEdgeIterator(TVertex vertex) {
+        return TEdgeIterator(this, vertex);
+    }
+
+    TVertexNumber getVertexNumber() const {
+        return vertex_number_;
+    }
+
+    TVertex getSource() const {
+        return source_;
+    }
+
+    TVertex getSink() const {
+        return sink_;
+    }
+
+    TFlow getFlowValue() const {
+        TFlow flow = 0;
+
+        for (auto edge_num : graph_[source_]) {
+            const auto& edge = edges_[edge_num];
+            flow += edge.flow;
+        }
+
+        return flow;
+    }
+
+private:
+    struct TEdge_ {
+        TVertex finish;
+        TFlow   flow;
+        TFlow   capacity;
+
+        TEdge_(TVertex finish, TFlow flow, TFlow capacity) :
+            finish(finish),
+            flow(flow),
+            capacity(capacity)
+        {}
+    };
+
+    std::vector< std::vector<TEdgeNum> > graph_;
+    std::vector<TEdge_> edges_;
+    TVertex vertex_number_;
+    TVertex source_;
+    TVertex sink_;
+};
+
+} // end of namespace NFlow
+
+
+namespace NMalhotra {
+
+template<typename TFlow>
+class TMalhotra {
+public:
+    typedef NFlow::TNetwork<TFlow> TNetwork;
+
+    TMalhotra(const TNetwork& network) :
+        network_(network)
+    {
+        const auto vertex_number = network.getVertexNumber();
+        incoming_potential_.resize(vertex_number);
+        outcoming_potential_.resize(vertex_number);
+        is_available_.resize(vertex_number);
+        graph_.resize(vertex_number);
+        reversed_graph_.resize(vertex_number);
+
+        findMaxFlow_();
+    }
+
+    const TNetwork& getNetwork() const {
+        return network_;
+    }
+
+private:
+    typedef typename TNetwork::TVertex       TVertex_;
+    typedef typename TNetwork::TVertexNumber TVertexNumber_;
+    typedef typename TNetwork::TEdgeNum      TEdgeNum_;
+    typedef typename TNetwork::TEdgeIterator TEdgeIterator_;
+    typedef unsigned int                TDist_;
+    typedef std::make_unsigned_t<TFlow> TPotential_;
+
+    struct Edge_ {
+        TVertex_       finish;
+        TEdgeIterator_ network_edge;
+        Edge_(TVertex_ finish, TEdgeIterator_ network_edge) :
+            finish(finish),
+            network_edge(network_edge)
+        {}
+    };
+
+    TNetwork network_;
+    std::vector<TPotential_>          incoming_potential_;
+    std::vector<TPotential_>          outcoming_potential_;
+    std::vector<bool>                 is_available_;
+    std::vector< std::vector<Edge_> > graph_;
+    std::vector< std::vector<Edge_> > reversed_graph_;
+
+    TPotential_ getPotential_(TVertex_ vertex) {
+        if (vertex == network_.getSource()) {
+            return outcoming_potential_[vertex];
+        }
+        if (vertex == network_.getSink()) {
+            return incoming_potential_[vertex];
+        }
+        return std::min(incoming_potential_[vertex], outcoming_potential_[vertex]);
+    }
+
+    TVertex_ getMinPotentialVertex_() {
+        TVertex_ min_potential_vertex = network_.getSource();
+        for (TVertexNumber_ vertex = 0; vertex < network_.getVertexNumber(); ++vertex) {
+            if (is_available_[vertex] && getPotential_(vertex) < getPotential_(min_potential_vertex)) {
+                min_potential_vertex = vertex;
+            }
+        }
+        return min_potential_vertex;
+    }
+
+    void removeZeroPotentialVertex_(TVertex_ vertex) {
+        is_available_[vertex] = false;
+        for (const auto edge : graph_[vertex]) {
+            incoming_potential_[edge.finish] -= edge.network_edge.getResudialCapacity();
+        }
+        for (const auto edge : reversed_graph_[vertex]) {
+            outcoming_potential_[edge.finish] -= edge.network_edge.getResudialCapacity();
+        }
+    }
+
+    void findMaxFlow_() {
+        while(build_graph_()) {
+            removeIncorrectEdges_();
+            calcPotential_();
+            const auto source = network_.getSource();
+            const auto sink   = network_.getSink();
+            while(std::min(getPotential_(source), getPotential_(sink)) > 0) {
+                const auto min_potential_vertex = getMinPotentialVertex_();
+                if (getPotential_(min_potential_vertex) == 0) {
+                    removeZeroPotentialVertex_(min_potential_vertex);
+                } else {
+                    pushFlow_(min_potential_vertex);
+                }
+            }
+        }
+    }
+
+    bool build_graph_() {
+        const auto INF           = std::numeric_limits<TDist_>::max();
+        const auto vertex_number = network_.getVertexNumber();
+        const auto source        = network_.getSource();
+        const auto sink          = network_.getSink();
+        for (TVertexNumber_ vertex = 0; vertex < vertex_number; ++vertex) {
+            is_available_[vertex] = false;
+            graph_[vertex].clear();
+            reversed_graph_[vertex].clear();
+        }
+        std::vector<TDist_> dist(vertex_number, INF);
+        dist[source] = 0;
+
+        std::queue<TVertex_> queue;
+        queue.push(source);
+
+        while(!queue.empty()) {
+            const auto cur_vertex = queue.front();
+            queue.pop();
+            for (auto it = network_.getEdgeIterator(cur_vertex); !it.isEnd(); ++it) {
+                const auto cur_finish = it.getFinish();
+                if (it.getResudialCapacity() > 0){
+                    if (dist[cur_finish] == INF) {
+                        dist[cur_finish] = dist[cur_vertex] + 1;
+                        queue.push(cur_finish);
+                    }
+
+                    if (dist[cur_finish] == dist[cur_vertex] + 1) {
+                        graph_[cur_vertex].emplace_back(cur_finish, it);
+                        reversed_graph_[cur_finish].emplace_back(cur_vertex, it);
+                    }
+                }
+            }
+        }
+
+        if (dist[sink] == INF) {
+            return false;
+        }
+
+        dist.assign(vertex_number, INF);
+        dist[sink] = 0;
+        queue.push(sink);
+
+        while(!queue.empty()) {
+            const auto cur_vertex = queue.front();
+            queue.pop();
+            for (const auto& edge : reversed_graph_[cur_vertex]) {
+                if (dist[edge.finish] == INF) {
+                    dist[edge.finish] = dist[cur_vertex] + 1;
+                    queue.push(edge.finish);
+                }
+            }
+        }
+
+        for (TVertexNumber_ vertex = 0; vertex < vertex_number; ++vertex) {
+            is_available_[vertex] = dist[vertex] != INF;
+        }
+
+        return true;
+    }
+
+    void removeIncorrectEdges_() {
+        for (TVertexNumber_ vertex = 0; vertex < network_.getVertexNumber(); ++vertex) {
+            if (!is_available_[vertex]) {
+                graph_[vertex].clear();
+                reversed_graph_[vertex].clear();
+            } else {
+                TEdgeNum_ edge_num = 0;
+                auto& graph = graph_[vertex];
+                while(edge_num < graph.size()) {
+                    if (!is_available_[graph[edge_num].finish]) {
+                        std::swap(graph[edge_num], graph.back());
+                        graph.pop_back();
+                    } else {
+                        ++edge_num;
+                    }
+                }
+
+                auto& reversed_graph = reversed_graph_[vertex];
+                while(edge_num < reversed_graph.size()) {
+                    if (!is_available_[reversed_graph[edge_num].finish]) {
+                        std::swap(reversed_graph[edge_num], reversed_graph.back());
+                        reversed_graph.pop_back();
+                    } else {
+                        ++edge_num;
+                    }
+                }
+            }
+        }
+    }
+
+    void calcPotential_() {
+        for (TVertexNumber_ vertex = 0; vertex < network_.getVertexNumber(); ++vertex) {
+            incoming_potential_[vertex]  = 0;
+            outcoming_potential_[vertex] = 0;
+            for (const auto& edge : reversed_graph_[vertex]) {
+                incoming_potential_[vertex] += edge.network_edge.getResudialCapacity();
+            }
+            for (const auto& edge : graph_[vertex]) {
+                outcoming_potential_[vertex] += edge.network_edge.getResudialCapacity();
+            }
+        }
+    }
+
+    void pushFlow_(TVertex_ min_potential_vertex) {
+        TFlow flow_value = getPotential_(min_potential_vertex);
+        std::queue< std::pair<TVertex_, TFlow> > queue;
+        queue.push({min_potential_vertex, flow_value});
+
+        while(!queue.empty()) {
+            auto [cur_vertex, flow] = queue.front();
+            queue.pop();
+            if (cur_vertex == network_.getSink()) {
+                continue;
+            }
+            auto& graph = graph_[cur_vertex];
+            while(flow) {
+                auto& cur_edge = graph.back();
+                if (!is_available_[cur_edge.finish] || cur_edge.network_edge.getResudialCapacity() == 0) {
+                    graph.pop_back();
+                } else {
+                    TFlow cur_flow = std::min(flow, cur_edge.network_edge.getResudialCapacity());
+                    cur_edge.network_edge.pushFlow(cur_flow);
+                    outcoming_potential_[cur_vertex]     -= cur_flow;
+                    incoming_potential_[cur_edge.finish] -= cur_flow;
+                    flow                                 -= cur_flow;
+                    queue.push({cur_edge.finish, cur_flow});
+                }
+            }
+        }
+
+        queue.push({min_potential_vertex, flow_value});
+
+        while(!queue.empty()) {
+            auto [cur_vertex, flow] = queue.front();
+            queue.pop();
+            if (cur_vertex == network_.getSource()) {
+                continue;
+            }
+            auto& graph = reversed_graph_[cur_vertex];
+            while(flow) {
+                auto& cur_edge = graph.back();
+                if (!is_available_[cur_edge.finish] || cur_edge.network_edge.getResudialCapacity() == 0) {
+                    graph.pop_back();
+                } else {
+                    TFlow cur_flow = std::min(flow, cur_edge.network_edge.getResudialCapacity());
+                    cur_edge.network_edge.pushFlow(cur_flow);
+                    incoming_potential_[cur_vertex]       -= cur_flow;
+                    outcoming_potential_[cur_edge.finish] -= cur_flow;
+                    flow                                  -= cur_flow;
+                    queue.push({cur_edge.finish, cur_flow});
+                }
+            }
+        }
+    }
+};
+
+} // end of namespace NMalhotra
+
+
+namespace NGoldberg {
+
+template<typename TFlow>
+class TGoldberg {
+public:
+    typedef NFlow::TNetwork<TFlow> TNetwork;
+
+    TGoldberg(const TNetwork& network) :
+        network_(network)
+    {
+        const auto vertex_number = network.getVertexNumber();
+        height_.resize(vertex_number);
+        potential_.resize(vertex_number);
+        for (TVertexNumber_ vertex = 0; vertex < vertex_number; ++vertex) {
+            edge_iterator_.push_back(network_.getEdgeIterator(vertex));
+        }
+        findMaxFlow_();
+    }
+
+    const TNetwork& getNetwork() const {
+        return network_;
+    }
+
+private:
+    typedef typename TNetwork::TVertex       TVertex_;
+    typedef typename TNetwork::TVertexNumber TVertexNumber_;
+    typedef typename TNetwork::TEdgeIterator TEdgeIterator_;
+    typedef unsigned int THeight_;
+    typedef std::make_unsigned_t<TFlow> TPotential_;
+
+    TNetwork network_;
+    std::vector<THeight_>       height_;
+    std::vector<TPotential_>    potential_;
+    std::vector<TEdgeIterator_> edge_iterator_;
+    std::queue<TVertex_>        overflowed_vertexes_;
+
+    void pushFlow(TVertex_ vertex, TEdgeIterator_ edge) {
+        const TFlow flow = std::min(potential_[vertex], (TPotential_)edge.getResudialCapacity());
+        const auto source = network_.getSource();
+        const auto sink   = network_.getSink();
+        if (vertex != source && vertex != sink) {
+            potential_[vertex] -= flow;
+        }
+        const auto finish = edge.getFinish();
+        if (finish != source && finish != sink) {
+            potential_[finish] += flow;
+        }
+        edge.pushFlow(flow);
+    }
+
+    void relabel(TVertex_ vertex) {
+        THeight_ new_height = std::numeric_limits<THeight_>::max();
+        for (auto it = network_.getEdgeIterator(vertex); !it.isEnd(); ++it) {
+            if (it.getResudialCapacity() > 0) {
+                new_height = std::min(new_height, height_[it.getFinish()] + 1);
+            }
+        }
+        height_[vertex] = new_height;
+    }
+
+    void discharge(TVertex_ vertex) {
+        auto& edge = edge_iterator_[vertex];
+        while(potential_[vertex] > 0) {
+            if (edge.isEnd()) {
+                relabel(vertex);
+                edge = network_.getEdgeIterator(vertex);
+            } else {
+                const TVertex_ finish = edge.getFinish();
+                if (edge.getResudialCapacity() > 0 && height_[vertex] == height_[finish] + 1) {
+                    const bool was_overflowed = potential_[finish] > 0;
+                    pushFlow(vertex, edge);
+                    if (!was_overflowed && potential_[finish] > 0) {
+                        overflowed_vertexes_.push(finish);
+                    }
+                } else {
+                    ++edge;
+                }
+            }
+        }
+    }
+
+    void findMaxFlow_() {
+        for (TVertexNumber_ vertex = 0; vertex < network_.getVertexNumber(); ++vertex) {
+            potential_[vertex] = 0;
+            height_[vertex]    = 0;
+        }
+
+        const auto source = network_.getSource();
+        height_[source] = network_.getVertexNumber();
+
+        for (auto it = network_.getEdgeIterator(source); !it.isEnd(); ++it) {
+            const auto cur_finish = it.getFinish();
+            const auto sink       = network_.getSink();
+            const auto flow       = it.getResudialCapacity();
+            it.pushFlow(flow);
+            if (cur_finish != sink) {
+                potential_[cur_finish] += flow;
+            }
+
+            if (potential_[cur_finish] > 0) {
+                overflowed_vertexes_.push(cur_finish);
+            }
+        }
+
+        while(!overflowed_vertexes_.empty()) {
+            const auto cur_vertex = overflowed_vertexes_.front();
+            overflowed_vertexes_.pop();
+            discharge(cur_vertex);
+        }
+    }
+};
+
+} // end of namespace NGoldberg
+
+
+int main(){
+    int n;
+    std::cin >> n;
+    std::vector<int> cost(n);
+    for (int i = 0; i < n; i++) {
+        std::cin >> cost[i];
+    }
+
+    const int INF = std::numeric_limits<int>::max();
+    const unsigned int source = n;
+    const unsigned int sink = n + 1;
+    NFlow::TNetwork<int> network(n + 2, source, sink);
+
+    for (int vertex = 0; vertex < n; vertex++) {
+        int cnt;
+        std::cin >> cnt;
+        while(cnt--) {
+            int parent;
+            std::cin >> parent;
+            parent--;
+            network.addEdge(vertex, parent, INF);
+        }
+    }
+
+    int result = 0;
+
+    for (int vertex = 0; vertex < n; vertex++) {
+        if (cost[vertex] > 0) {
+            result += cost[vertex];
+            network.addEdge(source, vertex, cost[vertex]);
+        } else {
+            network.addEdge(vertex, sink, -cost[vertex]);
+        }
+    }
+
+    NMalhotra::TMalhotra malhotra(network);
+    const auto malhotra_result_network = malhotra.getNetwork();
+
+    NGoldberg::TGoldberg goldberg(network);
+    const auto goldberg_result_network = goldberg.getNetwork();
+
+    assert(malhotra_result_network.getFlowValue() == goldberg_result_network.getFlowValue());
+
+    std::cout << result - malhotra_result_network.getFlowValue();
+}
+```
+## <center>formulas&ideas.txt</center>
+```c++
+Формула Кэли для кол-ва деревьев:
+
+n^(n-2)
+
+==============================================================================================================
+
+Количество деревьев с путем длины k:
+
+(k+1) * n^(n-k-2) * (n-2)! / (n-k-2)! 
+
+==============================================================================================================
+
+Количество лесов из n вершин и k деревьев:
+
+sum by i from 0 to k:
+
+(-1/2)^i * (k+i) * i! * C(k, i) * C(n-k, i) * n^(n-k-i-1)
+
+==============================================================================================================
+
+Решаем задачи на посчитать по всем объектам char(object)^k:
+<=>
+количество способов выбрать объект + последовательность длины k, членами которой являются члены char
+а теперь решаем для последовательности
+
+(к примеру, посчитаь size^k для всех связных подграфов дерева, k <= 10
+вместо size^k выбираем подграф + последовательность из k его вершин
+теперь простая DP под поддеревьям)
+
+==============================================================================================================
+
+Задача по модулю p - возможно стоит дискретно логарифмировать (т.е если x = pr_root ^ y, то заменим x на y)
+
+тогда произведение переходит в сумму (a*b = pr_root ^ x * pr_root ^ y = (pr_root)^(x+y))
+
+==============================================================================================================
 ```
 ## <center>GaussModulo</center>
 ```c++
@@ -1011,23 +1719,159 @@ struct GomoryHuTree{
     }
 };
 ```
-## <center>Interpolation</center>
+## <center>LevelAncestor</center>
 ```c++
-double lagrange(double* x, double* y, short n, double _x) {
-	double result = 0.0;
+const int N = 150007, LG = 20; //set it here
+// init from list of tree edges 
+// get(x, y) returns y-th ancestor of x by O(1)
 
-	for (short i = 0; i < n; i++)
-	{
-		double P = 1.0;
+struct LA{
+    int dv[LG][N];
+    int n, m, u;
+    int szlad = 0;
+    vector<int> ladders[N], data[N];
+    int what_ladder[N], what_number[N], logs[2*N], lengths[N];
+    int fathers[N], d[N];
 
-		for (short j = 0; j < n; j++)
-			if (j != i)
-				P *= (_x - x[j])/ (x[i] - x[j]);
+    void first_dfs(int vertex){
+        int l = 1;
+        for (int i=0; i < (int) data[vertex].size(); i++){
+            int to = data[vertex][i];
+            first_dfs(to);
+            l = max(l, lengths[to] + 1);
+        }
+        lengths[vertex] = l;
+    }
 
-		result += P * y[i];
-	}	
+    void up(int vertex, int ost){
+        if (vertex == 0 || ost == 0){
+            ladders[szlad-1].push_back(vertex);
+            return;
+        }
+        up(fathers[vertex], ost - 1);
+        ladders[szlad-1].push_back(vertex);
+    }
 
-	return result;
+    void binup_dfs(int vertex, int last){
+        if (last != -1){
+            dv[0][vertex] = last;
+            int nv = last;
+            int now_level = 1;
+            while (dv[now_level-1][nv] != -1){
+                dv[now_level][vertex] = dv[now_level-1][nv];
+                nv = dv[now_level-1][nv];
+                now_level++;
+            }
+        }
+        for (int i=0; i < (int) data[vertex].size(); i++){
+            binup_dfs(data[vertex][i], vertex);
+        }
+    }
+
+    void dfs(int vertex, int ladder, int depth){
+        d[vertex] = depth;
+        if (szlad == ladder){
+            szlad++;
+            up(vertex, lengths[vertex]);
+            what_ladder[vertex] = szlad - 1;
+            what_number[vertex] = ladders[szlad - 1].size() - 1;
+        }
+        else{
+            ladders[ladder].push_back(vertex);
+            what_ladder[vertex] = ladder;
+            what_number[vertex] = ladders[ladder].size() - 1;
+        }
+        bool go = false;
+        for (int i=0; i < (int) data[vertex].size(); i++){
+            int to = data[vertex][i];
+            if (go || lengths[to] + 1 != lengths[vertex]){
+                dfs(to, szlad, depth + 1);
+            }
+            else{
+                dfs(to, ladder, depth + 1);
+                go = true;
+            }
+        }
+    }
+
+    int get(int vertex, int when){
+        if (d[vertex] <= when) return 0;
+        if (when == 0) return vertex;
+        vertex = dv[logs[when]][vertex];
+        when -= (1LL << logs[when]);
+        return ladders[what_ladder[vertex]][what_number[vertex] - when];
+    }
+     
+    void pre_dfs(int vertex, int last){
+        if (last != -1) fathers[vertex] = last;
+     
+        int I = -1;
+     
+        for (int i=0; i < data[vertex].size(); ++i){
+            int to = data[vertex][i];
+            if (to==last){
+                I=i;
+                continue;
+            }
+            pre_dfs(to, vertex);
+        }
+     
+        if (I!=-1){
+            swap(data[vertex][I], data[vertex].back());
+            data[vertex].pop_back();
+        }
+    }
+
+    void init(vector<pair<int, int> > edges) {
+        for (int i=0; i < edges.size(); ++i) {
+            data[edges[i].first].push_back(edges[i].second);
+            data[edges[i].second].push_back(edges[i].first);
+        }
+
+        pre_dfs(0, -1);
+        first_dfs(0);
+        int start = 0;
+        for (int i=0; i < LG; i++){
+            for (int j=0; j < N; j++){
+                dv[i][j] = -1;
+            }
+        }
+        for (int i=2; i <= 2*N; i*=2){
+            for (int j=i/2; j < i; j++){
+                logs[j] = start;
+            }
+            start++;
+        }
+        dfs(0, 0, 0);
+        binup_dfs(0, -1);
+
+    }
+
+};
+```
+## <center>Manaker</center>
+```c++
+// для четных палиндромов:
+// 1) запустить со строкой вида a#b#a#c#a#b#a
+// 2) взять значения в позициях решеток
+vector<int> manaker(const string &s) {
+    vector<int> man(s.size(), 0);
+    int l = 0, r = 0;
+    int n = s.size();
+    for (int i = 1; i < n; i++) {
+        if (i <= r) {
+            man[i] = min(r - i, man[l + r - i]);
+        }
+        while (i + man[i] + 1 < n && i - man[i] - 1 >= 0
+               && s[i + man[i] + 1] == s[i - man[i] - 1]) {
+            man[i]++;
+        }
+        if (i + man[i] > r) {
+            l = i - man[i];
+            r = i + man[i];
+        }
+    }
+    return man;
 }
 ```
 ## <center>MinCostMaxFlow</center>
@@ -1123,6 +1967,7 @@ struct MinCostMaxFlow {
     static const int MAX_V = 603;
     static const int MAX_E = 2 * 333 * 333;
     static const int INF = 1e9 + 7;
+    static const int MAX_COST = 1e9 + 7; // change to ll if it is exceeded in FB
 
     int sz = 0;
     Edge e[MAX_E];
@@ -1138,13 +1983,23 @@ struct MinCostMaxFlow {
         e[sz++] = { v, 0, 0, -cost };
     }
 
-    void calcPhi() {
+    void calcPhi(int start) {
         // FB for calculating phi, add vertex q and q->v for all v with cost 0
-        for (int i = 0; i < MAX_V; ++i) phi[i] = 0;
+        for (int i = 0; i < MAX_V; ++i) phi[i] = MAX_COST;
+        phi[start] = 0;
+        for (int k = 0; k < MAX_V; k++) {
+            for (int v = 0; v < MAX_V; v++) {
+                for (int to : g[v]) {
+                    Edge &ed = e[to];
+                    if (ed.cap == ed.flow) continue;
+                    phi[ed.to] = min(phi[ed.to], phi[v] + ed.cost);
+                }
+            }
+        }
     }
 
     ll find(int start, int finish, int required_flow) {
-        calcPhi();
+        calcPhi(start);
 
         ll ans = 0;
 
@@ -1399,6 +2254,292 @@ void inverseORConvolution(vector<int>& v){
     inverseORConvolution(f);
     f is ur answer
 */
+```
+## <center>PalindromeTree</center>
+```c++
+struct PalindromeTree {
+    static const int SZ = 5e5;
+    static const int SIGMA = 26;
+
+    vector<int> s;
+    int to[SZ][SIGMA];
+    int suf[SZ];
+    int len[SZ];
+    int last;
+    int sz;
+
+    // 0, 1 - roots
+    PalindromeTree() {
+        s.push_back(-1);
+        for (int i = 0; i < SZ; ++i) for (int j = 0; j < SIGMA; ++j) to[i][j] = -1;
+        sz = 2; last = 1; len[0] = -1; suf[1] = 0; suf[0] = -1;
+    }
+
+    void clear() {
+        s.clear();
+        s.push_back(-1);
+        for (int i = 0; i < sz; ++i) {
+            for (int j = 0; j < SIGMA; ++j) {
+                to[i][j] = -1;
+            }
+        }
+        sz = 2; last = 1; len[0] = -1; suf[1] = 0; suf[0] = -1;
+    }
+
+    void add(int c) {
+        s.push_back(c);
+        while (c != s[(int)s.size() - len[last] - 2]){
+            last = suf[last];
+        }
+        if (to[last][c] == -1){
+            int v = sz++;
+            to[last][c] = v;
+            len[v] = len[last] + 2;
+            do {
+                last = suf[last];
+            } while(last != -1 && s[(int)s.size() - len[last] - 2] != c);
+            if (last == -1){
+                suf[v] = 1;
+            } else {
+                suf[v] = to[last][c];
+            }
+            last = v;
+        } else {
+            last = to[last][c];
+        }
+    }
+} PT;
+```
+## <center>PrimitiveRoot</center>
+```c++
+#include <bits/stdc++.h>
+#define ll long long
+#define ull unsigned long long
+#define db long double
+
+using namespace std;
+
+struct PrimitiveRoot{
+
+	int mod, root; //modulo must be prime
+	//call initialization and answer will be in 'root'
+
+	int mult(int x, int y){
+		return ((ll) x * (ll) y) % (ll) mod;
+	}
+
+	int pw(int x, int y){
+		if (y==0) return 1;
+		if (y==1) return x%mod;
+		if (y%2) return mult(x, pw(x, y-1));
+		int R = pw(x, y/2);
+		return mult(R, R);
+	}
+
+	vector<int> get_primes(int v){
+	    vector<int> ans;
+	    int uk = 2;
+	    while(uk * uk <= v){
+	        int was = 0;
+	        while(v % uk == 0){
+	            v /= uk;
+	            was = 1;
+	        }
+	        if (was) ans.push_back(uk);
+	        uk++;
+	    }
+	    if (v > 1) ans.push_back(v);
+	    return ans;
+	}
+
+	PrimitiveRoot(int given_mod){
+		mod = given_mod;
+	    int phi = mod - 1;
+	    auto now = get_primes(phi);
+
+	    for (int v = 1; ; v++){
+	        bool ok = 1;
+
+	        for (int p : now) if (pw(v, phi / p) == 1){
+	            ok = 0;
+	            break;
+	        }
+
+	        if (ok){
+	        	root = v;
+	        	return;
+	        }
+	    }
+	}
+};
+```
+## <center>SmallestCircleProblem</center>
+```c++
+namespace SCP{ //Smallest Circle Problem
+    //it is supposed to work O(n) averagely
+    struct pt{
+        db x, y;
+        pt() {}
+        pt(db x, db y): x(x), y(y) {}
+        pt operator- (const pt &nxt) const { return pt(x - nxt.x, y - nxt.y); }
+        db len(){
+            return sqrt(x * x + y * y);
+        }
+    };
+
+    struct line{
+        db a, b, c;
+    };
+
+    db getSquare(db r){
+        return M_PI * r * r;
+    }
+
+    pt getMedian(pt &a, pt &b){
+        return pt((a.x + b.x) / 2, (a.y + b.y) / 2);
+    }
+
+    pair<pt, db> SCP(pt &a, pt &b){
+        return make_pair(getMedian(a, b), (a - b).len() / 2);
+    }
+
+    pt intersectLines(line &l1, line &l2){
+        if (abs(l1.a * l2.b - l2.a * l1.b) < eps) throw 42;
+        db x = (l2.c * l1.b - l1.c * l2.b) / (l1.a * l2.b - l2.a * l1.b);
+        db y = (l2.c * l1.a - l1.c * l2.a) / (l1.b * l2.a - l2.b * l1.a);
+        return pt(x, y);
+    }
+
+    pair<pt, db> SCP(pt &a, pt &b, pt &c){
+        pt o1 = getMedian(a, b);
+        pt o2 = getMedian(b, c);
+        line l1, l2;
+        l1.a = (b - a).x; l1.b = (b - a).y; l1.c = -(l1.a * o1.x + l1.b * o1.y);
+        l2.a = (b - c).x; l2.b = (b - c).y; l2.c = -(l2.a * o2.x + l2.b * o2.y);
+        try {
+            pt o = intersectLines(l1, l2);
+            return make_pair(o, (o - a).len());
+        } catch(...) {
+            throw;
+        }
+    }
+
+    bool inCircle(pt &a, pt &O, db r){
+        return (O - a).len() <= r + eps;
+    }
+
+    pair<pt, db> recSolve(vector<pt> &a, vector<pt> &b){
+        assert(b.size() <= 3);
+        if (b.size() == 3){
+            auto [O, r] = SCP(b[0], b[1], b[2]);
+            bool ok = 1;
+            for (auto p : a) if (!inCircle(p, O, r)){
+                ok = 0;
+                break;
+            }
+            if (ok) return make_pair(O, r);
+            else return make_pair(O, -2);
+        } else {
+            if (a.size() == 0){
+                if (b.size() == 0) return make_pair(pt(0, 0), 0);
+                if (b.size() == 1) return make_pair(b[0], 0);
+                if (b.size() == 2) return SCP(b[0], b[1]);
+            } else {
+                pt p = a.back(); a.pop_back();
+                auto [O, r] = recSolve(a, b);
+                a.push_back(p);
+                if (inCircle(p, O, r)) return make_pair(O, r);
+                a.pop_back(), b.push_back(p);
+                auto res = recSolve(a, b);
+                a.push_back(p), b.pop_back();
+                return res;
+            }
+        }
+    }
+
+    db solve(vector<pt> &a){
+        if (a.size() == 1) return 0;
+        random_shuffle(a.begin(), a.end());
+        vector<pt> b;
+        db ans = recSolve(a, b).second;
+        return getSquare(ans);
+    }
+}
+```
+## <center>SuffixArray</center>
+```c++
+struct SuffixArray {
+    static const int SZ = 3e5;
+
+    int c[SZ];
+    int cnt[SZ];
+    int p[SZ];
+    int pn[SZ];
+    int cn[SZ];
+
+    vector<int> buildSA(const vector<int>& s) {
+        int n = s.size();
+        int alpha = (*max_element(s.begin(), s.end())) + 1;
+        memset(cnt, 0, alpha * sizeof(int));
+        for (int c : s) ++cnt[c];
+        for (int i = 1; i < alpha; ++i) cnt[i] += cnt[i - 1];
+        for (int i = 0; i < n; ++i) p[--cnt[s[i]]] = i;
+        c[p[0]] = 0;
+        int cs = 1;
+        for (int i = 1; i < n; ++i) {
+            if (s[p[i]] != s[p[i - 1]]) ++cs;
+            c[p[i]] = cs - 1;
+        }
+
+        for (int h = 0; (1 << h) < n; ++h) {
+            for (int i = 0; i < n; ++i) {
+                pn[i] = p[i] - (1 << h);
+                if (pn[i] < 0) pn[i] += n;
+            }
+            memset(cnt, 0, cs * sizeof(int));
+            for (int i = 0; i < n; ++i) ++cnt[c[pn[i]]];
+            for (int i = 1; i < cs; ++i) cnt[i] += cnt[i - 1];
+            for (int i = n - 1; i >= 0; --i) p[--cnt[c[pn[i]]]] = pn[i];
+            cn[p[0]] = 0;
+            cs = 1;
+            for (int i = 1; i < n; ++i) {
+                int mid1 = (p[i] + (1 << h)) % n, mid2 = (p[i-1] + (1 << h)) % n;
+                if (c[p[i]] != c[p[i-1]] || c[mid1] != c[mid2]) ++cs;
+                cn[p[i]] = cs - 1;
+            }
+            memcpy (c, cn, n * sizeof(int));
+        }
+
+        vector<int> result(p, p + n);
+        return result;
+    }
+
+    // suf = sa from func above
+    vector<int> buildLCP(const vector<int>& s, const vector<int>& suf) const {
+        int n = s.size();
+        vector<int> rsuf(n);
+        vector<int> lcp(n);
+        for (ll i = 0; i < n; i++) {
+            rsuf[suf[i]] = i;
+        }
+
+        int k = 0;
+        for (int i = 0; i < n; ++i) {
+            if (k > 0) --k;
+            if (rsuf[i] == n - 1) {
+                lcp[n - 1] = -1;
+                k = 0;
+                continue;
+            } else {
+                int j = suf[rsuf[i] + 1];
+                while (max(i + k, j + k) < n && s[i + k] == s[j + k]) ++k;
+                lcp[rsuf[i]] = k;
+            }
+        }
+
+        return lcp;
+    }
+} SA;
 ```
 ## <center>SuffixAutomata</center>
 ```c++
@@ -1714,45 +2855,6 @@ void hadamard(vector<int>& v){
     // f is ur answer
 */
 ```
-## <center>formulas&ideas.txt</center>
-```c++
-Формула Кэли для кол-ва деревьев:
-
-n^(n-2)
-
-==============================================================================================================
-
-Количество деревьев с путем длины k:
-
-(k+1) * n^(n-k-2) * (n-2)! / (n-k-2)! 
-
-==============================================================================================================
-
-Количество лесов из n вершин и k деревьев:
-
-sum by i from 0 to k:
-
-(-1/2)^i * (k+i) * i! * C(k, i) * C(n-k, i) * n^(n-k-i-1)
-
-==============================================================================================================
-
-Решаем задачи на посчитать по всем объектам char(object)^k:
-<=>
-количество способов выбрать объект + последовательность длины k, членами которой являются члены char
-а теперь решаем для последовательности
-
-(к примеру, посчитаь size^k для всех связных подграфов дерева, k <= 10
-вместо size^k выбираем подграф + последовательность из k его вершин
-теперь простая DP под поддеревьям)
-
-==============================================================================================================
-
-Задача по модулю p - возможно стоит дискретно логарифмировать (т.е если x = pr_root ^ y, то заменим x на y)
-
-тогда произведение переходит в сумму (a*b = pr_root ^ x * pr_root ^ y = (pr_root)^(x+y))
-
-==============================================================================================================
-```
 ## <center>DynamicConvexHullTrick</center>
 ```c++
 #define ALL(c) (c).begin(),(c).end()
@@ -1847,6 +2949,16 @@ int64 solve() {
 ```
 ## <center>FASTIO</center>
 ```c++
+const int MAX_MEM = 1e8;
+int mpos = 0;
+char mem[MAX_MEM];
+void * operator new ( size_t n ) {
+    char *res = mem + mpos;
+    mpos += n;
+    return (void *)res;
+}
+void operator delete ( void * ) { }
+
 1. /** Interface */
 2.  
 3. inline int readChar();
@@ -2121,7 +3233,7 @@ int32_t main()
     return 0;
 }
 ```
-## <center>Matiroids</center>
+## <center>Matroids</center>
 ```c++
 #include <bits/stdc++.h>
 #define int long long
@@ -2330,137 +3442,88 @@ void mincut() {
 	}
 }
 ```
-## <center>PalindromicTree</center>
+## <center>SuffixTree</center>
 ```c++
-struct vert{
-    int len, suf;
-    int to[26];
-    vert() { for (int i = 0; i < 26; i++) to[i] = -1; len = -1, suf = -1; }
-};
-struct palindromeTree{
-    vert t[5000007];
-    int sz, last;
-    string s;
-    palindromeTree() { sz = 2; last = 1; t[last].suf = 0; t[last].len = 0; }
-    int addChar(char c){
-        s += c;
-        int p = last;
-        while(p != -1 && c != s[(int)s.size() - t[p].len - 2]) p = t[p].suf;
+char s[N + 1];
+map<char, int> t[VN];
+int l[VN], r[VN], p[VN];
+int n = 0, suf[VN], vn = 2, v = 1, pos = 0;
 
-        if (t[p].to[c - 'a'] == -1){
-            int now = sz++;
-            last = now;
-            t[p].to[c - 'a'] = now;
-            t[now].len = t[p].len + 2;
-            do p = t[p].suf; while(p != -1 && c != s[(int)s.size() - t[p].len - 2]);
-            if (p == -1) t[now].suf = 1;
-            else t[now].suf = t[p].to[c - 'a'];
-            return 1;
-        } else {
-            last = t[p].to[c - 'a'];
-            return 0;
+set<int> lens[VN];
+fraction ans(1, 1);
+
+int dfs(int v, int len) {
+    if (t[v].empty()) {
+        lens[v].insert(len);
+        return N;
+    }
+    int md = N;
+    for (auto [c, u] : t[v]) {
+        md = min(md, dfs(u, len + min(n, r[u]) - l[u]));
+        if (lens[v].size() < lens[u].size()) {
+            lens[v].swap(lens[u]);
+        }
+        for (int x : lens[u]) {
+            auto it = lens[v].lower_bound(x);
+            if (it != lens[v].end()) {
+                md = min(md, *it - x);
+            }
+            if (it != lens[v].begin()) {
+                --it;
+                md = min(md, x - *it);
+            }
+            lens[v].insert(x);
         }
     }
-} t;
+    if (md != N) {
+        ans = max(ans, fraction(len + md, md));
+    }
+    return md;
+}
 
 int main() {
-    string s;
-    cin >> s;
-    for (int i = 0; i < s.size(); i++){
-        cout << t.addChar(s[i]);
+    string w;
+    cin >> w;
+    w += '$';
+    for (char c = 0; c < 127; c++) {
+        t[0][c] = 1;
     }
-}
-```
-## <center>Sufmas</center>
-```c++
-#include <bits/stdc++.h>
-#define ll long long
-using namespace std;
-vector <ll> construct(string &s) {
-    s += (char) ('a' - 1);
-    ll n = s.size();
-    vector <ll> suffs(n, 0), classes(n, 0);
-    vector <ll> cnt(Q, 0);
-    ll last = Q;
-    for (ll i = 0; i < n; i++) {
-        classes[i] = s[i] - 'a' + 3;
-        cnt[classes[i]]++;
-    }
-    for (ll i = 1; i < Q; i++) {
-        cnt[i] += cnt[i - 1];
-    }
-    for (ll i = 0; i < n; i++) {
-        ll w = s[i] - 'a' + 3;
-        suffs[cnt[w - 1]++] = i;
-    }
-    cnt.clear();
-    last = 0;
-    for (ll i = 0; i < n; i++) {
-        if (!i || s[suffs[i - 1]] != s[suffs[i]]) {
-            last++;
-        }
-        classes[suffs[i]] = last;
-    }
-    cnt.resize(last + 1, 0);
-    ll len = 1;
-    while (len < n) {
-        for (ll i = 0; i < n; i++) {
-            cnt[classes[i]]++;
-        }
-        for (ll i = 1; i <= last; i++) {
-            cnt[i] += cnt[i - 1];
-        }
-        vector <ll> suffs1(n, 0);
-        for (ll i = 0; i < n; i++) {
-            ll j = (suffs[i] - len + n) % n;
-            suffs1[cnt[classes[j] - 1]++] = j;
-        }
-        suffs = suffs1;
-        ll last1 = 0;
-        vector <ll> classes1(n, 0);
-        for (ll i = 0; i < n; i++) {
-            if (!i) {
-                last1++;
-            } else {
-                ll w1 = classes[suffs[i - 1]], w2 = classes[suffs[i]];
-                ll d1 = classes[(suffs[i - 1] + len) % n], d2 = classes[(suffs[i] + len) % n];
-                if (w1 != w2 || d1 != d2) {
-                    last1++;
-                }
-            }
-            classes1[suffs[i]] = last1;
-        }
-        cnt.clear();
-        cnt.resize(last1 + 1, 0);
-        last = last1;
-        classes = classes1;
-        len *= 2;
-    }
-    return suffs;
-}
+    l[1] = -1;
 
-vector <ll> build_lcp(string s, vector <ll> suff) {
-    ll n = suff.size();
-    vector <ll> rsuff(n, -1);
-    for (ll i = 0; i < n; i++) {
-        rsuff[suff[i]] = i;
-    }
-    vector <ll> lcp(n, 0);
-    ll pos = rsuff[0];
-    assert(pos);
-    ll k = suff[pos - 1];
-    while (k + lcp[pos] < n && s[lcp[pos]] == s[k + lcp[pos]]) {
-        lcp[pos]++;
-    }
-    for (ll i = 1; i < n - 1; i++) {
-        ll q = rsuff[i];
-        ll p = rsuff[i - 1];
-        lcp[q] = max(lcp[p] - 1, 0LL);
-        ll k = suff[q - 1];
-        while (max(k, i) + lcp[q] < n && s[k + lcp[q]] == s[i + lcp[q]]) {
-            lcp[q]++;
+    for (n = 0; n < int(w.size()); n++) {
+		char c = s[n] = w[n];
+		auto new_leaf = [&]( int v ) {
+			p[vn] = v, l[vn] = n, r[vn] = N, t[v][c] = vn++;
+		};
+		go:;
+		if (r[v] <= pos) { 
+			if (!t[v].count(c)) {
+				new_leaf(v), v = suf[v], pos = r[v];
+				goto go;
+			}
+			v = t[v][c], pos = l[v] + 1;
+		} else if (c == s[pos]) {
+			pos++;
+		} else {
+			int x = vn++;
+			l[x] = l[v], r[x] = pos, l[v] = pos;
+			p[x] = p[v], p[v] = x;
+			t[p[x]][s[l[x]]] = x, t[x][s[pos]] = v;
+			new_leaf(x);
+			v = suf[p[x]], pos = l[x];
+			while (pos < r[x])
+				v = t[v][s[pos]], pos += r[v] - l[v];
+			suf[x] = (pos == r[x] ? v : vn);
+			pos = r[v] - (pos - r[x]);
+			goto go;
+		}
+	}
+    
+    for (auto [c, v] : t[1]) {
+        if (c != '$') {
+            dfs(v, min(n, r[v]) - l[v]);
         }
     }
-    return lcp;
+
 }
 ```
