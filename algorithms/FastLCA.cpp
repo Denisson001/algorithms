@@ -8,7 +8,7 @@
 using namespace std;
 struct FastLCA{
 
-	static const int N = 200007, LG = 20; //N = 2*n + 7
+	static const int N = 524288, LG = 21; //N >= 2*n + 7 and N = 2^k
 
 	vector<vector<int> > data;
 	vector<int> euler, where, depth, logs;
