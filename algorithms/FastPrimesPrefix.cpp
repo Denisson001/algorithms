@@ -1,15 +1,5 @@
-#include <bits/stdc++.h>
-#define ll long long
-#define db long double
-#define x first
-#define y second
-#define mp make_pair
-#define pb push_back
-#define all(a) a.begin(), a.end()
 
-using namespace std;
-
-class BIT {
+class BIT { // fenwick
 public:
     BIT(int n) {
         arr.resize(n);
@@ -37,7 +27,7 @@ private:
 namespace counting_primes {
 
 // BEGIN_CODE
-    const ll MAXN = 1e11 + 1;
+    const ll MAXN = 1e11 + 1; // max query value
     const ll K = 2500000; // (n / log n) ^ (2 / 3)
     const ll MAXP = 200000; // number of primes <= K
     const ll MAXQ = 10000000; // number of queries
@@ -150,17 +140,10 @@ namespace counting_primes {
 
 } // counting_primes
 
+// USAGE EXAMPLE
 
 int main(){
-#ifdef LOCAL
-	freopen("A_input.txt", "r", stdin);
-	//freopen("A_output.txt", "w", stdout);
-#endif
-	ios_base::sync_with_stdio(0);
-	cin.tie(0);
-
 	counting_primes::sieve();
 
-	//queries
-
+    // call countPrimes here
 }
