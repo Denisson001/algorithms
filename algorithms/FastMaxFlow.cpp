@@ -14,6 +14,7 @@ public:
     struct Edge{
         int from, to, rev;
         cap_t f; cap_t cap; // cap-f is supposed to be used as information about flow number through an edge
+        //IMPORTANT! edges are not going to be sorted. Thus you should just keep from -> to information 
     };
 
     Push_Relabel(int n_):n(n_), m(0){}
