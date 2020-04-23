@@ -2,20 +2,12 @@ struct Hasher{
 	vector<int> a, h, rev;
 	
     int p, mod;
+    int n;
     
     Hasher(const vector<int>& a, int p, int mod): a(a), p(p), mod(mod) {
+    	n = a.size();
         build();
     }
-
-	int bp(int a, int k){
-		if (k == 0) return 1;
-		if (k % 2 == 1){
-			return a * (ll)bp(a, k - 1) % mod;
-		} else {
-			int q = bp(a, k >> 1);
-			return q * (ll)q % mod;
-		}
-	}
 
 	void build(){
 		rev.resize(a.size() + 1); h.resize(a.size() + 1);
@@ -25,14 +17,14 @@ struct Hasher{
 		for (int i = 1; i <= a.size(); i++){
 			h[i] = (h[i - 1] + a[i - 1] * (ll)deg) % mod;
 			deg = deg * (ll)p % mod;
-			rev[i] = bp(deg, mod - 2);
+			rev[i] = deg;
 		}
 	}
 
-	int get(int l, int r){
+	inline int get(int l, int r){
 		int ans = h[r + 1] - h[l];
 		if (ans < 0) ans += mod;
-		ans = ans * (ll)rev[l] % mod;
+		ans = ans * (ll)rev[n - r] % mod;
 		return ans;
 	}
-};	
+}; 
