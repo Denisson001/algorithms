@@ -1,6 +1,6 @@
 // It's strictly forbidden to use buildSA() and not 
-// to add a fictitious char, which should be smaller 
-// than all other chars in a string, to the end!!!
+// to add a fictitious integer, which should be smaller 
+// than all other integers representing a string, to the end!!!
 struct SuffixArray {
     static const int SZ = 3e5;
 
