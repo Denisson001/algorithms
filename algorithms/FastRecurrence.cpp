@@ -14,7 +14,7 @@ using namespace std;
 
 // Use get_nth function from Reccurence where:
 // f[0], f[1], ..., f[k-1] are the first elements of the sequence
-// f[n] = f[n-1] * a[k-1] + ... + f[n-k] * a[0] for all n >= k
+// sequence a[0], a[1], ..., a[k-1] is such that f[i] = f[i-1] * a[k-1] + ... + f[i-k] * a[0] for all i >= k
 // n is your desirable value
 // mod is a prime number (supposed not to be too large ?)
 
