@@ -18,7 +18,7 @@ using namespace std;
 // n is your desirable value
 // mod is a prime number (supposed not to be too large ?)
 
-class cn{
+class cn {
 public:
 	db x, y;
 	cn(){}
@@ -32,9 +32,9 @@ cn operator + (cn a, cn b) { return cn(a.x + b.x, a.y + b.y); }
 cn operator - (cn a, cn b) { return cn(a.x - b.x, a.y - b.y); }
 cn operator * (cn a, cn b) { return cn(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
 
-class FFT{
+class FFT {
 public:
-	constexpr const static db pi = 3.1415926535;
+	const static db pi = 3.1415926535;
 	const static int MAX_SIZE = 1 << 21;
 
 	//#define cn complex<db>

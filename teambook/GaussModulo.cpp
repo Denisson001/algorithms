@@ -1,22 +1,8 @@
-struct GaussModulo {
-    int mult(int a, int b){
-        return a * (ll)b % mod;
-    }
 
-    int pow(int val, int deg){
-        if (deg == 0) return 1;
-        if (deg & 1) {
-            return mult(val, pow(val, deg - 1));
-        } else {
-            int cur_val = pow(val, deg >> 1);
-            return mult(cur_val, cur_val);
-        }
-    }
+class GaussModulo {
+    const int mod = 31;
 
-    int get_rev(int val) {
-        return pow(val, mod - 2);
-    }
-
+public:
     enum GaussSolution {
         ZERO, ONE, MANY
     };
@@ -25,9 +11,11 @@ struct GaussModulo {
     GaussSolution solutions_cnt;
     vector<int> solutions;
 
-    GaussModulo(vector< vector<int> > &eqs) {
+    // eqs = A|b
+    // A*x = b
+    GaussModulo(vector< vector<int> >& eqs) {
         n = (int)eqs.back().size() - 1;
-        solutions.resize(n);
+        solutions.resize(n, 0);
 
         int cur_eq = 0;
         for (int v = 0; v < n; v++) {
@@ -59,11 +47,6 @@ struct GaussModulo {
             cur_eq++;
         }
 
-        if (cur_eq < n) {
-            solutions_cnt = MANY;
-            return;
-        }
-
         for (int i = cur_eq; i < eqs.size(); i++) {
             if (eqs[i].back() != 0) {
                 solutions_cnt = ZERO;
@@ -71,16 +54,47 @@ struct GaussModulo {
             }
         }
 
-        for (int v = n - 1; v >= 0; v--) {
-            for (int eq_num = v - 1; eq_num >= 0; eq_num--) {
-                eqs[eq_num].back() -= mult(eqs[eq_num][v], eqs[v].back());
-                if (eqs[eq_num].back() < 0) eqs[eq_num].back() += mod;
-                eqs[eq_num][v] = 0;
-            }
+        if (cur_eq < n) {
+            solutions_cnt = MANY;
+        } else {
+            solutions_cnt = ONE;
         }
 
-        solutions_cnt = ONE;
+        for (int v = n - 1; v >= 0; v--) {
+            int pos = -1;
+            for (int i = 0; i + 1 < eqs[v].size(); ++i) {
+                if (eqs[v][i] != 0) {
+                    pos = i;
+                    break;
+                }
+            }
+            if (pos == -1) continue;
+            solutions[pos] = eqs[v].back();
 
-        for (int v = 0; v < n; v++) solutions[v] = eqs[v].back();
+            for (int eq_num = v - 1; eq_num >= 0; eq_num--) {
+                eqs[eq_num].back() -= mult(eqs[eq_num][pos], eqs[v].back());
+                if (eqs[eq_num].back() < 0) eqs[eq_num].back() += mod;
+                eqs[eq_num][pos] = 0;
+            }
+        }
+    }
+
+private:
+    int mult(int a, int b){
+        return a * (ll)b % mod;
+    }
+    
+    int pow(int a, int n) {
+        int res = 1;
+        while (n) {
+            if (n & 1) res = mult(res, a);
+            a = mult(a, a);
+            n >>= 1;
+        }
+        return res;
+    }
+
+    int get_rev(int val) {
+        return pow(val, mod - 2);
     }
 };

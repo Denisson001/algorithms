@@ -1,6 +1,6 @@
 #define db long double
 
-class cn{
+class cn {
 public:
 	db x, y;
 	cn(){}
@@ -14,9 +14,9 @@ cn operator + (cn a, cn b) { return cn(a.x + b.x, a.y + b.y); }
 cn operator - (cn a, cn b) { return cn(a.x - b.x, a.y - b.y); }
 cn operator * (cn a, cn b) { return cn(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
 
-class FFT{
+class FFT {
 public:
-	constexpr const static db pi = acos(-1.0);
+	constexpr static db pi = acos(-1.0);
 	const static int MAX_SIZE = 1 << 21;
 
 	//#define cn complex<db>
@@ -58,18 +58,17 @@ public:
 
 	vector<int> mult(vector<int> &w1, vector<int> &w2){
 		n = 1;
-		while(n < w1.size() + w2.size()) n *= 2;
-		for (int i = 0; i < w1.size(); i++) a[i] = w1[i];
-		for (int i = 0; i < w2.size(); i++) b[i] = w2[i];
-		for (int i = w1.size(); i < n; i++) a[i] = 0;
-		for (int i = w2.size(); i < n; i++) b[i] = 0;
+		while(n < w1.size() + w2.size()) n <<= 1;
+		std::copy(w1.begin(), w1.end(), a);
+		std::copy(w2.begin(), w2.end(), b);
+		std::fill(a + w1.size(), a + n, 0);
+		std::fill(b + w2.size(), b + n, 0);
 		fft(a, 1);
 		fft(b, 1);
 		for (int i = 0; i < n; i++) a[i] = a[i] * b[i];
 		fft(a, -1);
 		vector<int> ans(n);
-		for (int i = 0; i < n; i++) ans[i] = floor((db)a[i].real()
-		 + 0.5);
+		for (int i = 0; i < n; i++) ans[i] = floor((db)a[i].real() + 0.5);
 		while(ans.size() && ans.back() == 0) ans.pop_back();
 		return ans;
 	}

@@ -21,9 +21,7 @@ vector<Vertex> decart;
 pair<int, int> SP = make_pair(-1, -1);
 
 int clone(int vertex) {
-
     if (vertex == -1) return -1;
-
     Vertex kek = decart[vertex];
     decart.push_back(kek);
     return decart.size() - 1;
@@ -103,8 +101,8 @@ pair<int, int> split(int father, int number){
     update(father);
     return p;
 }
-int merg(int first, int second){
 
+int merg(int first, int second) {
     first = clone(first);
     second = clone(second);
 
@@ -115,7 +113,6 @@ int merg(int first, int second){
 
     db ratio = (db) (decart[first].sz) / (db) (decart[first].sz + decart[second].sz);
     db tratio = (db) (rand() % 32768) / (db) (1<<15);
-
 
     if (tratio < ratio){
         int v = merg(decart[first].r, second);

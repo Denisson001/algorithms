@@ -22,14 +22,14 @@ public:
 		return a * (ll)b % mod;
 	}
 
-	int bp(int a, int k){
-		if (k == 0) return 1;
-		if (k & 1){
-			return mult(a, bp(a, k - 1));
-		} else {
-			int q = bp(a, k >> 1);
-			return mult(q, q);
+	int bp(int a, int n) {
+		int res = 1;
+		while (n) {
+			if (n & 1) res = mult(res, a);
+			a = mult(a, a);
+			n >>= 1;
 		}
+		return res;
 	}
 
 	int rev(int a){
@@ -78,7 +78,8 @@ public:
 	vector<int> mult(vector<int> &w1, vector<int> &w2){
 		n = 1;
 		while(n < w1.size() + w2.size()) n *= 2;
-		for (int i = 0; i < w1.size(); i++){
+		
+		/* for (int i = 0; i < w1.size(); i++){
 			a[i] = w1[i];
 			a[i] %= mod;
 			if (a[i] < 0) a[i] += mod;
@@ -87,9 +88,13 @@ public:
 			b[i] = w2[i];
 			b[i] %= mod;
 			if (b[i] < 0) b[i] += mod;
-		}
-		for (int i = w1.size(); i < n; i++) a[i] = 0;
-		for (int i = w2.size(); i < n; i++) b[i] = 0;
+		} */
+
+		std::copy(w1.begin(), w1.end(), a);
+		std::copy(w2.begin(), w2.end(), b);
+		std::fill(a + w1.size(), a + n, 0);
+		std::fill(b + w2.size(), b + n, 0);
+
 		ntt(a, 1);
 		ntt(b, 1);
 		for (int i = 0; i < n; i++) a[i] = mult(a[i], b[i]);
