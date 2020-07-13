@@ -1,3 +1,5 @@
+// After all add call buildSuf and then call buildAu
+
 struct Aho{
     struct Vert{
         int to[26], au[26];

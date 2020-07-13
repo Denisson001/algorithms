@@ -1,3 +1,11 @@
+struct pt {
+    ll x, y;
+    pt() {}
+    pt(ll x, ll y): x(x), y(y) {}
+    ll operator% (const pt& nxt) const { return x * nxt.y - y * nxt.x; }
+    pt operator- (const pt& nxt) const { return pt(x - nxt.x, y - nxt.y); }
+};
+
 vector<pt> convex_hull(vector<pt> a){
     if (a.size() <= 1) return a;
     sort(a.begin(), a.end(), [](const pt& a, const pt& b){
