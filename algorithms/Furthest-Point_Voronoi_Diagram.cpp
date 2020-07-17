@@ -14,7 +14,7 @@ using namespace std;
 // [-MAXN; MAXN] x [-MAXN-C, MAXN+C]
 // MAXN must have order of square of a bound of coordinates
 // It looks like the code produces relative error around 10^(-7)
-// Be very careful and be ready for this code not working for some tough cases (I actually picked up eps for this particular task)
+// Be very careful and be ready to this code not working for some tough cases (I actually picked up eps for this particular task)
 
 
 const db MAXN = 2e12;
