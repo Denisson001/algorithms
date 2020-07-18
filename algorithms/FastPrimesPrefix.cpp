@@ -1,4 +1,9 @@
 
+// number of primes in [1;n]
+// call sieve() and after this call countPrimes(n) (possibly multiple times)
+// complexity is O(n^2/3)
+
+
 class BIT { // fenwick
 public:
     BIT(int n) {
@@ -141,9 +146,3 @@ namespace counting_primes {
 } // counting_primes
 
 // USAGE EXAMPLE
-
-int main(){
-	counting_primes::sieve();
-
-    // call countPrimes here
-}
