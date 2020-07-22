@@ -5,6 +5,9 @@
 
 using namespace std;
 
+// Calculates binomial(n, k) modulo p
+// call smallcnk(n, k) for getting a result
+
 struct SmallCnk{
 
 	int mod; //modulo must be prime
