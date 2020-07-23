@@ -1,4 +1,3 @@
-
 // number of primes in [1;n]
 // call sieve() and after this call countPrimes(n) (possibly multiple times)
 // complexity is O(n^2/3)
@@ -30,11 +29,10 @@ private:
 
 
 namespace counting_primes {
-
-// BEGIN_CODE
+    
     const ll MAXN = 1e11 + 1; // max query value
     const ll K = 2500000; // (n / log n) ^ (2 / 3)
-    const ll MAXP = 200000; // number of primes <= K
+    const ll MAXP = 200000; // number of primes in [1..K]
     const ll MAXQ = 10000000; // number of queries
 
     int cntPrimes = 0;
@@ -141,8 +139,5 @@ namespace counting_primes {
         }
         return sizes[1] - 2 + calc2(n, 1, sizes[1] - 1);
     }
-// END_CODE
 
 } // counting_primes
-
-// USAGE EXAMPLE
