@@ -12,12 +12,13 @@
 using namespace std;
 const ll LINF = 1e15;
 
-//Complexity is O(m * logn + nlog^2n)
+// Complexity is O(m * logn + nlog^2n)
 
-namespace twoc { //addEdge(u, v, cost)
-    //init(n) - before the running
-    //solve(root) - flow
-    //the result is ll (probably?)
+namespace twoc { 
+    // addEdge(u, v, cost)
+    // init(n) - before the running
+    // solve(root) - flow
+    // the result is ll (probably?)
     struct Heap {
         static Heap *null;
         ll x, xadd;
@@ -148,23 +149,15 @@ namespace twoc { //addEdge(u, v, cost)
         answer[root] = 0;
         set<ipair > es(all(eout[root]));
         while (!es.empty()) {
-
             auto it = es.begin();
-
             int ei = it->second;
-
             es.erase(it);
-
             int nv = edges[ei].y;
-
-            if (answer[nv] != -1)
-
+            if (answer[nv] != -1) {
                 continue;
-
+            }
             answer[nv] = ei;
-
             return ans;
-
         }
     }
 }
