@@ -2,6 +2,10 @@
 
 export PATH="$(pwd):$PATH"
 
+for file_name in A B C D E F G H I J K L M N O P fast_run open run run_gen run_stupid sanitize_run stress run_perf; do
+    rm -rf $file_name
+done
+
 touch make
 chmod +x make
 
@@ -82,7 +86,7 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++11 -Wall -DLOCAL -o \${name} && time ./\${name}
+g++ \${name}.cpp -std=c++17 -Wall -DLOCAL -o \${name} && time ./\${name}
 " >> run
 
 echo "Run script created"
@@ -97,7 +101,7 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++11 -Wall -O2 -DLOCAL -o \${name} && time ./\${name}
+g++ \${name}.cpp -std=c++17 -Wall -O2 -DLOCAL -o \${name} && time ./\${name}
 " >> fast_run
 
 echo "Fast_run script created"
@@ -112,7 +116,7 @@ name=\$1
 
 cd \$name
 
-g++ \${name}_stupid.cpp -std=c++11 -Wall -DLOCAL -o \${name}_stupid && time ./\${name}_stupid
+g++ \${name}_stupid.cpp -std=c++17 -Wall -DLOCAL -o \${name}_stupid && time ./\${name}_stupid
 " >> run_stupid
 
 echo "Run_stupid script created"
@@ -127,8 +131,7 @@ name=\$1
 
 cd \$name
 
-g++ \${name}_gen.cpp -std=c++11 -Wall -DLOCAL -o \${name}_gen && time ./\${name}_gen 13
-" >> run_gen
+g++ \${name}_gen.cpp -std=c++17 -Wall -DLOCAL -o \${name}_gen && time ./\${name}_gen 13 > \${name}_input.txt" >> run_gen
 
 echo "Run_gen script created"
 
@@ -142,10 +145,27 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++11 -Wall -DLOCAL -fsanitize=address -fsanitize=undefined -o \${name} && time ./\${name}
+g++ \${name}.cpp -std=c++17 -Wall -DLOCAL -fsanitize=address -fsanitize=undefined -o \${name} && time ./\${name}
 " >> sanitize_run
 
 echo "Sanitize_run script created"
+
+touch run_perf
+chmod +x run_perf
+
+echo "
+#!/bin/bash
+
+name=\$1
+
+cd \$name
+
+g++ \${name}.cpp -std=c++17 -Wall -DLOCAL -o \${name}
+sudo perf record -e cpu-clock ./\${name}
+sudo perf report --stdio --dsos=\${name} | c++filt
+" >> run_perf
+
+echo "Run_perf script created"
 
 touch stress
 chmod +x stress
@@ -157,9 +177,9 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++11 -Wall -o \${name}
-g++ \${name}_stupid.cpp -std=c++11 -Wall -O2 -o \${name}_stupid
-g++ \${name}_gen.cpp -std=c++11 -Wall -O2 -o \${name}_gen
+g++ \${name}.cpp -std=c++17 -Wall -o \${name}
+g++ \${name}_stupid.cpp -std=c++17 -Wall -O2 -o \${name}_stupid
+g++ \${name}_gen.cpp -std=c++17 -Wall -O2 -o \${name}_gen
 
 for ((i = 1; i < 1000000; i++)); do
     ./\${name}_gen \$i > \${name}_input.txt
@@ -189,7 +209,3 @@ subl \${name}.cpp
 echo "Open script created"
 
 rm make
-
-echo "BYE"
-
-rm start-contest.sh
