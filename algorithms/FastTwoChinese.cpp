@@ -18,6 +18,7 @@ namespace twoc {
     // addEdge(u, v, cost)
     // init(n) - before the running
     // solve(root) - flow
+    // answer[] - edge id
     // the result is ll (probably?)
     struct Heap {
         static Heap *null;
@@ -157,8 +158,9 @@ namespace twoc {
                 continue;
             }
             answer[nv] = ei;
-            return ans;
+            es.insert(all(eout[nv]));
         }
+        return ans;
     }
 }
 
