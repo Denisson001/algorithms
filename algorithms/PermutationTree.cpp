@@ -11,7 +11,7 @@ using namespace std;
 
 // Permtation Tree - представление перестановки в виде дерева, где каждый хороший (max - min = cnt - 1) отрезок
 // это подотрезок списка смежности какой-либо вершины, причем для каждой вершины
-// выполнено, что либо все нетривиальные подотрезки списка смежности либо хорошие, либо все плохие
+// выполнено, что либо все нетривиальные подотрезки списка смежности либо хорошие (join node), либо все плохие (cut_node)
 // O(n*logn) построение
 // N = 2*n + 7
 // build(v) для построения
@@ -19,6 +19,7 @@ using namespace std;
 // get_segs - за какие индексы
 // get_children, get_parent - для получения структуры дерева
 // get_root - корень
+// if_join - тип вершины
 
 struct PermutationTree{
 
@@ -205,7 +206,7 @@ struct PermutationTree{
 		return children[x];
 	}
 
-	bool if_cut(int x) {
+	bool if_join(int x) {
 		auto var = get_sons(x);
 
 		vector<pair<int, int> > tet;
