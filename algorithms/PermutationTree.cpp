@@ -1,16 +1,7 @@
-#include <bits/stdc++.h>
-#define ll long long
-#define db long double
-#define x first
-#define y second
-#define mp make_pair
-#define pb push_back
-#define all(a) a.begin(), a.end()
-
-using namespace std;
-
-// Permtation Tree - представление перестановки в виде дерева, где каждый хороший (max - min = cnt - 1) отрезок
-// это подотрезок списка смежности какой-либо вершины, причем для каждой вершины
+// Permutation Tree - представление перестановки в виде дерева, где каждая вершина отвечает за отрезок [l;r] перестановки
+// и дизъюнктное объединение отрезков, за которые отвечают дети вершины v - это в точности отрезок вершины v
+// Выполнено, что каждый хороший (max - min = cnt - 1) отрезок перестановки
+// это подотрезок отсортированного списка детей какой-либо вершины, причем для каждой вершины
 // выполнено, что либо все нетривиальные подотрезки списка смежности либо хорошие (join node), либо все плохие (cut_node)
 // O(n*logn) построение
 // N = 2*n + 7
@@ -21,12 +12,14 @@ using namespace std;
 // get_root - корень
 // if_join - тип вершины
 
+// Принимается перестановка в любой индексации
+
 struct PermutationTree{
 
 	static const int N = 400007;
-	#define ll long long
-	#define ii pair<ll,ll>
-	#define iii pair<ii,ll>
+	#define ll int
+	#define ii pair<int,int>
+	#define iii pair<int,int>
 	#define fi first
 	#define se second
 
@@ -202,7 +195,7 @@ struct PermutationTree{
 		return span[x];
 	}
 
-	vector<int> get_sons(int x) {
+	vector<int> get_children(int x) {
 		return children[x];
 	}
 
