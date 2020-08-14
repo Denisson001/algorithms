@@ -1,9 +1,12 @@
-// After all add call buildSuf and then call buildAu
+// After all add's call buildSuf and then call buildAu
 
-struct Aho{
-    struct Vert{
-        int to[26], au[26];
-        int suf, p, c;
+struct Aho {
+    struct Vert {
+        int to[26]; // tree edge
+        int au[26]; // automata edge
+        int suf;    // suf link
+        int p;      // parent
+        int c;      // edge char between vertex and parent
         Vert() { for (int i = 0; i < 26; i++) to[i] = -1, au[i] = 0; suf = 0; }
     };
 
@@ -12,7 +15,7 @@ struct Aho{
 
     Aho() { sz = 1; }
 
-    int add(string &s){
+    int add(string &s) {
         int v = 0;
         for (char c : s){
             int now = c - 'a';
@@ -22,7 +25,7 @@ struct Aho{
         return v;
     }
 
-    void buildSuf(){
+    void buildSuf() {
         vector<int> st;
         int uk = 0;
         st.push_back(0);
@@ -44,7 +47,7 @@ struct Aho{
         }
     }
 
-    void buildAu(){
+    void buildAu() {
         vector<int> st;
         int uk = 0;
         st.push_back(0);
