@@ -15,7 +15,7 @@ struct Aho {
 
     Aho() { sz = 1; }
 
-    int add(string &s) {
+    int add(const string& s) {
         int v = 0;
         for (char c : s){
             int now = c - 'a';

@@ -1,3 +1,4 @@
+// Euler's pentagonal number theorem
 // O(n * sqrt(n)) algo
 // func[4] = 5
 // 4 = 1 + 1 + 1 + 1
