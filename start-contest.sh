@@ -86,7 +86,7 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++17 -Wall -DLOCAL -o \${name} && time ./\${name}
+g++ \${name}.cpp -std=c++17 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -DLOCAL -o \${name} && time ./\${name}
 " >> run
 
 echo "Run script created"
@@ -101,7 +101,7 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++17 -Wall -O2 -DLOCAL -o \${name} && time ./\${name}
+g++ \${name}.cpp -std=c++17 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -O2 -DLOCAL -o \${name} && time ./\${name}
 " >> fast_run
 
 echo "Fast_run script created"
@@ -145,7 +145,7 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++17 -Wall -DLOCAL -fsanitize=address -fsanitize=undefined -o \${name} && time ./\${name}
+g++ \${name}.cpp -std=c++17 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -DLOCAL -fsanitize=address -fsanitize=undefined -o \${name} && time ./\${name}
 " >> sanitize_run
 
 echo "Sanitize_run script created"
@@ -177,9 +177,9 @@ name=\$1
 
 cd \$name
 
-g++ \${name}.cpp -std=c++17 -Wall -o \${name}
-g++ \${name}_stupid.cpp -std=c++17 -Wall -O2 -o \${name}_stupid
-g++ \${name}_gen.cpp -std=c++17 -Wall -O2 -o \${name}_gen
+g++ \${name}.cpp -std=c++17 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -o \${name}
+g++ \${name}_stupid.cpp -std=c++17 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -O2 -o \${name}_stupid
+g++ \${name}_gen.cpp -std=c++17 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -O2 -o \${name}_gen
 
 for ((i = 1; i < 1000000; i++)); do
     ./\${name}_gen \$i > \${name}_input.txt
