@@ -57,25 +57,5 @@ struct st{
 		it--;
 		return it->n+x*it->k;
 	}
-} st[100007];
+};
  
-ll ans[100007];
- 
- 
-void dfs(int v, int pred){
-	//cout << v << ' ' << pred << endl;
-	int ff = 0;
-	for (int to : g[v]) if (to != pred){
-		dfs(to, v);
-		if (st[to].env.size() > st[v].env.size()) swap(st[to], st[v]);
-		for (auto c : st[to].env){
-			st[v].add(c.k, c.n);
-		}
-		ff = 1;
-	}
-	if (ff) ans[v] = st[v].query(w1[v]); else ans[v] = 0;
-	st[v].add(w2[v], ans[v]);
-	//for (auto c : st[v].env){
-	//	cout << "===" << v + 1 << ' ' << c.k << ' ' << c.n << ' ' << c.x << endl;
-	//}
-}
