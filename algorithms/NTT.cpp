@@ -6,6 +6,11 @@ public:
 	const static int root = 646; // 646^(2^20) == 1 (998244353)
 	const static int rev_root = 208611436;
 	const static int MAX_SIZE = 1 << 21;
+	
+	// const static int mod = 1300234241;
+	// const static int root = 317; // 317^(2^22) == 1 (1300234241)
+	// const static int rev_root = 717794928;
+	// const static int MAX_SIZE = 1 << 23;
 
 	void add(int &a, int b){
 		a += b;
