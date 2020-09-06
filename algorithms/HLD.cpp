@@ -12,7 +12,7 @@ using namespace std;
 struct HLD {
 	typedef int T;
 
-	static const int INF = 1e9 + 7;
+	static const T INF = 1e9 + 7;
 	static const int N = 1e5 + 7;
 	static const int LOGN = 20;
 	static const T DEFAULT_VALUE = -INF;
@@ -68,7 +68,7 @@ struct HLD {
 			build(a, 0, n, 1);
 		}
 
-		int get_func(int l, int r, int lt, int rt, int vt) {
+		T get_func(int l, int r, int lt, int rt, int vt) {
 			if (l >= rt || lt >= r) {
 				return DEFAULT_VALUE;
 			}
@@ -77,13 +77,13 @@ struct HLD {
 			}
 			int mt = (lt + rt) / 2;
 			push(vt, lt, rt);
-			int x = get_func(l, r, lt, mt, 2 * vt);
-			int y = get_func(l, r, mt, rt, 2 * vt + 1);
+			T x = get_func(l, r, lt, mt, 2 * vt);
+			T y = get_func(l, r, mt, rt, 2 * vt + 1);
 			relax(vt);
 			return func(x, y);
 		}
 
-		int get_func(int l, int r) {
+		T get_func(int l, int r) {
 			return get_func(l, r, 0, n, 1);
 		}
 
@@ -178,7 +178,7 @@ struct HLD {
 		}
 	}
 
-	int func_on_vert(int v, int p) {
+	T func_on_vert(int v, int p) {
 		T res = DEFAULT_VALUE;
 		int num = numOfPath[p], pos = numInPath[p];
 		while (true) {
@@ -220,7 +220,7 @@ struct HLD {
 		return res;
 	}
 
-	void update_on_path(int v, int u, int val) {
+	void update_on_path(int v, int u, T val) {
 		int l = lca(v, u);
 		update_on_vert(v, l, val);
 		if (u != l) {
