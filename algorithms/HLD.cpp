@@ -9,7 +9,26 @@
 
 using namespace std;
 
-struct HLD {
+/* READ ME
+ *
+ * Current version of HLD calculates maximum on path 
+ * with additions on paths;
+ * To change function to calculate you have to change
+ * func and DEFAULT_VALUE.
+ * To change update from addition to
+ * for example changes on path you have to change
+ * update and push.
+ *
+ * Parametres of HLD constructor are input tree graph
+ * and input weights of vertices.
+ *
+ * !!!! To calculate func on path run only function func_on_path
+ * For updates run update_on_path
+ * (func_on_vert and update_on_vert are private)
+ */
+
+class HLD {
+public:
 	typedef int T;
 
 	static const T INF = 1e9 + 7;
@@ -20,15 +39,41 @@ struct HLD {
 	int n;
 	vector <vector <int> > gr;
 
-	/* Current version of HLD calculates maximum on path 
-	 * with additions on paths;
-	 * To change function to calculate you have to change
-	 * func and DEFAULT_VALUE.
-	 * To change update from addition to
-	 * for example changes on path you have to change
-	 * update and push,
-	 */
+	HLD(const vector<vector<int>>& gr, const vector <T> &w) : n(gr.size()), gr(gr) {
+		hld_dfs(0);
+		for (int i = 0; i < (int) paths.size(); i++) {
+			auto &path = paths[i];
+			reverse(path.begin(), path.end());
+			vector <T> a;
+			for (int j = 0; j < (int) path.size(); j++) {
+				int v = path[j];
+				a.push_back(w[v]);
+				numInPath[v] = j;
+			}
+			trees.push_back(Tree(a));
+		}
+	}
 
+	T func_on_path(int v, int u) {
+		int l = lca(v, u);
+		T res = func_on_vert(v, l);
+		if (u != l) {
+			int pu = up(u, h[u] - h[l] - 1);
+			res = func(res, func_on_vert(u, pu));
+		}
+		return res;
+	}
+
+	void update_on_path(int v, int u, T val) {
+		int l = lca(v, u);
+		update_on_vert(v, l, val);
+		if (u != l) {
+			int pu = up(u, h[u] - h[l] - 1);
+			update_on_vert(u, pu, val);
+		}
+	}
+
+private:
 	static T func(const T& a, const T& b) {
 		return max(a, b);
 	}
@@ -163,20 +208,6 @@ struct HLD {
 		return binup[v][0];
 	}
 
-	HLD(const vector<vector<int>>& gr, const vector <T> &w) : n(gr.size()), gr(gr) {
-		hld_dfs(0);
-		for (int i = 0; i < (int) paths.size(); i++) {
-			auto &path = paths[i];
-			reverse(path.begin(), path.end());
-			vector <T> a;
-			for (int j = 0; j < (int) path.size(); j++) {
-				int v = path[j];
-				a.push_back(w[v]);
-				numInPath[v] = j;
-			}
-			trees.push_back(Tree(a));
-		}
-	}
 
 	T func_on_vert(int v, int p) {
 		T res = DEFAULT_VALUE;
@@ -207,25 +238,6 @@ struct HLD {
 			trees[nop].update_seg(0, nip + 1, val);
 			int nxt = paths[nop][0];
 			v = binup[nxt][0];
-		}
-	}
-
-	T func_on_path(int v, int u) {
-		int l = lca(v, u);
-		T res = func_on_vert(v, l);
-		if (u != l) {
-			int pu = up(u, h[u] - h[l] - 1);
-			res = func(res, func_on_vert(u, pu));
-		}
-		return res;
-	}
-
-	void update_on_path(int v, int u, T val) {
-		int l = lca(v, u);
-		update_on_vert(v, l, val);
-		if (u != l) {
-			int pu = up(u, h[u] - h[l] - 1);
-			update_on_vert(u, pu, val);
 		}
 	}
 };
