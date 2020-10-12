@@ -24,6 +24,7 @@ struct MinCostMaxFlow {
         e[sz++] = { v, 0, 0, -cost };
     }
 
+    // В DAG можно искать потенциалы с помощью ДП
     void calcPhi(int start) {
         // FB for calculating phi, add vertex q and q->v for all v with cost 0
         for (int i = 0; i < MAX_V; ++i) phi[i] = MAX_COST;
@@ -48,7 +49,7 @@ struct MinCostMaxFlow {
             for (int i = 0; i < MAX_V; i++) dp[i] = INF, prev[i] = { -1, -1 };
             dp[start] = 0;
 
-            set< pair<int, int> > se;
+            set< pair<int, int> > se; // or priority_queue
             se.insert({ 0, start });
 
             while (!se.empty()) {
@@ -76,7 +77,7 @@ struct MinCostMaxFlow {
                 max_flow = min(max_flow, e[now.y].cap - e[now.y].flow);
                 v = now.x;
             }
-            ans += (dp[finish] + phi[finish]) * (ll)max_flow;
+            ans += (dp[finish] + phi[finish] - phi[start]) * (ll)max_flow;
 
             v = finish;
             while (1) {
