@@ -15,7 +15,7 @@ void hadamard(vector<int>& v){
 }
 
 /* Usage Example
-    vector<int> f((1<<K)), g((1<<K));
+    vector<int> f(K), g(K);
     hadamard(f);
     hadamard(g);
     for (int i=0; i < K; i++) f[i] *= g[i];
