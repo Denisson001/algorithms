@@ -17,7 +17,8 @@ using namespace std;
 // sequence a[0], a[1], ..., a[k-1] is such that f[i] = f[i-1] * a[k-1] + ... + f[i-k] * a[0] for all i >= k
 // n is your desirable value
 // mod is a prime number (supposed not to be too large ?)
-// O(n * logn * logk)
+// O(k * logn * logk)
+// BE CAREFUL! ONLY SMALL MODULOS ARE ALLOWED HERE! FOR USUAL MODULOS PLEASE VISIT IDEAS SECTION AND WRITE SOME CODE FOR FFT
 
 class cn {
 public:
