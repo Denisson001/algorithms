@@ -5,12 +5,8 @@ public:
 	const static int mod = 998244353;
 	const static int root = 646; // 646^(2^20) == 1 (998244353)
 	const static int rev_root = 208611436;
+	const static int root_deg = 1 << 20;
 	const static int MAX_SIZE = 1 << 21;
-	
-	// const static int mod = 1300234241;
-	// const static int root = 317; // 317^(2^22) == 1 (1300234241)
-	// const static int rev_root = 717794928;
-	// const static int MAX_SIZE = 1 << 23;
 
 	void add(int &a, int b){
 		a += b;
@@ -61,8 +57,8 @@ public:
 			if (i < j) swap(a[i], a[j]);
 		}
 		for (int len = 2; len <= n; len *= 2){
-			int w = bp(root, (1 << 20) / len);
-			if (type == -1) w = bp(rev_root, (1 << 20) / len);
+			int w = bp(root, root_deg / len);
+			if (type == -1) w = bp(rev_root, root_deg / len);
 			for (int i = 0; i < n; i += len){
 				int g = 1;
 				for (int j = 0; j < len / 2; j++){
