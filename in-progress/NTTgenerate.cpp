@@ -19,6 +19,7 @@ int bp(int x, int y, int p) {
 
 }
 
+const int NEED = 23;
 
 main(){
 #ifdef LOCAL
@@ -30,7 +31,7 @@ main(){
 
 	int tut = 147;
 	while (true) {
-		int kek = tut * (1<<23) + 1;
+		int kek = tut * (1<<NEED) + 1;
 		bool suit = true;
 		for (int j = 2; j*j <= kek; ++j) {
 			if (kek % j == 0) {
@@ -42,14 +43,14 @@ main(){
 		tut++;
 	}
 
-	int M = tut * (1<<23) + 1;
+	int M = tut * (1<<NEED) + 1;
 	cout << M << endl;
 
 	int u = 2;
 	while (true) {
 		int now = 1;
 		int step = -1;
-		for (int i = 0; i < (1<<20); ++i) {
+		for (int i = 0; i < (1<<NEED); ++i) {
 			now = (now * u) % M;
 			if (now == 1) {
 				step = i+1;
@@ -57,7 +58,7 @@ main(){
 			}
 		}
 
-		if (step != (1<<20)) {
+		if (step != (1<<NEED)) {
 			u++;
 		}
 		else break;
