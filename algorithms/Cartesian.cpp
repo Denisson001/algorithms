@@ -28,6 +28,7 @@ int create_vertex(T value) {
 }
 
 void update(int v) {
+  if (v == 0) return;
   int L = tr[v].l, R = tr[v].r;
   tr[v].sz = 1 + tr[L].sz + tr[R].sz;
   // update value here like this
