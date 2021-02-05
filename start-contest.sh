@@ -31,6 +31,33 @@ echo \"#define pb push_back\" >> \${name}.cpp
 echo \"#define all(a) a.begin(), a.end()\" >> \${name}.cpp
 echo \"\" >> \${name}.cpp
 echo \"using namespace std;\" >> \${name}.cpp
+
+echo \"\" >> \${name}.cpp
+echo \"const int mod = 1000000007;\" >> \${name}.cpp
+echo \"\" >> \${name}.cpp
+echo \"void add(int& a, int b) {\" >> \${name}.cpp
+echo \"  a += b;\" >> \${name}.cpp
+echo \"  if (a >= mod) a -= mod;\" >> \${name}.cpp
+echo \"  if (a < 0) a += mod;\" >> \${name}.cpp
+echo \"}\" >> \${name}.cpp
+echo \"\" >> \${name}.cpp
+echo \"int mult(int a, int b) {\" >> \${name}.cpp
+echo \"  return a * (ll)b % mod;\" >> \${name}.cpp
+echo \"}\" >> \${name}.cpp
+
+echo \"\" >> \${name}.cpp
+echo \"int bp(int a, int b) {\" >> \${name}.cpp
+echo \"  int res = 1;\" >> \${name}.cpp
+echo \"  while (b > 0) {\" >> \${name}.cpp
+echo \"    if (b & 1) res = mult(res, a);\" >> \${name}.cpp
+echo \"    a = mult(a, a);\" >> \${name}.cpp
+echo \"    b >>= 1;\" >> \${name}.cpp
+echo \"  }\" >> \${name}.cpp
+echo \"  return res;\" >> \${name}.cpp
+echo \"}\" >> \${name}.cpp
+
+
+
 echo \"\" >> \${name}.cpp
 echo \"\" >> \${name}.cpp
 echo \"\" >> \${name}.cpp
