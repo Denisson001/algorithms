@@ -129,3 +129,82 @@ struct FenwickTree3 {
 		}
 	}
 };
+
+
+/*
+ * Fenwick tree on rectangle [0..MAX_SIZE-1]x[0..MAX_SIZE-1]
+ *
+ *   Rectangle sum [x1..x2]x[y1..y2]        - get(x1, y1, x2, y2)
+ *   Rectangle add [x1..x2]x[y1..y2] += val - add(x1, y1, x2, y2, val)
+ */
+const int mod = 10007;
+
+inline void addd(int& a, int b) {
+  a += b;
+  if (a >= mod) a -= mod;
+  if (a < 0) a += mod;
+}
+
+
+inline void addP(int& a, int b) {
+  a += b;
+  if (a >= mod) a -= mod;
+}
+
+
+inline int mult(int a, int b) {
+  return a * (ll)b % mod;
+}
+
+struct ST {
+  int a[4];
+};
+
+struct Fenwick {
+  int f[MAX_SIZE][MAX_SIZE][4];
+
+  void add(int xx, int yy, int val) {
+    for (int x = xx; x < MAX_SIZE; x = (x | (x + 1))) {
+      for (int y = yy; y < MAX_SIZE; y = (y | (y + 1))) {
+        addd(f[x][y][0], val);
+        addd(f[x][y][1], -val * xx);
+        addd(f[x][y][2], -val * yy);
+        addd(f[x][y][3], val * mult(xx, yy));
+      }
+    }
+  }
+
+  int get(int xx, int yy) {
+    if (min(xx, yy) < 0) return 0;
+    ST st;
+    st.a[0] = st.a[1] = st.a[2] = st.a[3] = 0;
+    for (int x = xx; x >= 0; x = (x & (x + 1)) - 1) {
+      for (int y = yy; y >= 0; y = (y & (y + 1)) - 1) {
+        addP(st.a[0], f[x][y][0]);
+        addP(st.a[1], f[x][y][1]);
+        addP(st.a[2], f[x][y][2]);
+        addP(st.a[3], f[x][y][3]);
+      }
+    }
+    int res = mult(st.a[0], mult(xx + 1, yy + 1));
+    addd(res, mult(st.a[1], yy + 1));
+    addd(res, mult(st.a[2], xx + 1));
+    addd(res, st.a[3]);
+    return res;
+  }
+
+  void add(int x1, int y1, int x2, int y2) {
+    add(x1, y1, 1);    
+    add(x2 + 1, y1, -1);    
+    add(x1, y2 + 1, -1);    
+    add(x2 + 1, y2 + 1, 1);    
+  }
+
+  int get(int x1, int y1, int x2, int y2) {
+    int ans = get(x2, y2);
+    addd(ans, -get(x1 - 1, y2));
+    addd(ans, -get(x2, y1 - 1));
+    addd(ans, get(x1 - 1, y1 - 1));
+    return ans;
+  }
+} F;
